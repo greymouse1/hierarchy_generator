@@ -1,0 +1,10 @@
+numpy
+pandas
+matplotlib
+scipy
+shapely
+tqdm
+pyshp
+matplotlib-scalebar
+descartes
+psutil
