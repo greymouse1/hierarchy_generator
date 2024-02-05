@@ -21,15 +21,15 @@ if __name__ == '__main__':
     import psutil
     from dataset import Dataset
     from matplotlib import pyplot as plt
-    import argparse
-    parser = argparse.ArgumentParser(description='Process some inputs.')
-    parser.add_argument("--threads", "-t", type=int, help="number of threads")
-    args2 = parser.parse_args()
+    #import argparse
+    #parser = argparse.ArgumentParser(description='Process some inputs.')
+    #parser.add_argument("--threads", "-t", type=int, help="number of threads")
+    #args2 = parser.parse_args()
 
     #set path to the directory that includes the subfolder 'data'
-    path_string = "\"/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/testing\""
+    path_string = "/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/testing/"
     #set path including the subfolder data (this is for collecting all datasets)
-    path = os.path.expanduser("/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/scripts/virtual_folder/pythonProject/testing/data")
+    path = "/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/testing/data"
     method = "tri"
     folder = method
     args = TempArgs(epsilon=0.1, path=folder + "/{}{}")
@@ -46,9 +46,9 @@ if __name__ == '__main__':
     # Run adopt merge for all datasets
     epsilons = [0.1, 1e-6]
     for dataset in sorted(datasets):
-        command = f"java -Xmx{memory-8}G -jar generalization.jar " + \
+        command = f"java -Xmx{1}G -jar generalization.jar " + \
         f"-m {method} -d {dataset.name} -rf {folder} " + \
-        f"-t {args2.threads} -p {path_string}"
+        f"-t {1} -p \"{path_string}\""
         print(command)
         os.system(command)
         # estr = ""
