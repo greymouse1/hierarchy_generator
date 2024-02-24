@@ -23,6 +23,8 @@ class Dataset(object):
         self.name = name
         self.data = {}
         self.gt_eps = gt_epsilon
+        self.all_wkt = []  # New instance variable to hold individual WKT polygons
+        self.wkt_union = [] # New instance variable to hold union of current and previous WKT polygons
 
         cases = [epsilon, self.gt_eps] if epsilon != 0 else range(1)
         for eps in cases:
@@ -42,6 +44,31 @@ class Dataset(object):
     def __lt__(self, other):
         return self.name < other.name
 #-------------------------------------------------------------------------------
+    def get_wkt(self, output_folder=None): # Writes wkt files all together into one test file
+        if not hasattr(self, 'all_wkt') or not self.all_wkt:
+            print("No WKT polygons stored.")
+            return
+        if output_folder is None:
+            output_folder = os.getcwd()
+        output_file = os.path.join(output_folder, 'all_wkt_polygons.txt')
+        with open(output_file, 'w') as f:
+            for polygon in self.all_wkt:
+                f.write(f"{polygon}\n")
+        print("WKT polygons have been written to file.")
+        print("File path:", output_file)
+
+    def get_wkt_unions(self, output_folder=None): # Writes unionised wkt files into one text file
+        if not hasattr(self, 'wkt_union') or not self.wkt_union:
+            print("No WKT polygons stored.")
+            return
+        if output_folder is None:
+            output_folder = os.getcwd()
+        output_file = os.path.join(output_folder, 'wkt_union_polygons.txt')
+        with open(output_file, 'w') as f:
+            for polygon in self.all_wkt:
+                f.write(f"{polygon}\n")
+        print("WKT unionised polygons have been written to file.")
+        print("File path:", output_file)
 
     def resultsLoaded(func):
 
@@ -521,6 +548,7 @@ def readSquentialWkb(self, eps):
 
         def polyGenerator(names):
             lastPoly = None
+            all_polygons = [] # This will hold all polygons
             for n in names:
                 poly = readWkbFile(n)
                 if not lastPoly:
@@ -528,7 +556,8 @@ def readSquentialWkb(self, eps):
                 else:
                     lastPoly = unary_union([poly, lastPoly])
                 yield lastPoly.simplify(1e-6, preserve_topology=False)
-
+                self.all_wkt.append(poly) # Append each poly to the list
+                self.wkt_union.append(lastPoly) # Append union of poly and lastPoly
         self.data[eps]["unionPolys"] = list(polyGenerator(filenames))
     #return polys, unionPolys, filenames
 
