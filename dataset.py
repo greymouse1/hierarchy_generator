@@ -65,7 +65,7 @@ class Dataset(object):
             output_folder = os.getcwd()
         output_file = os.path.join(output_folder, 'wkt_union_polygons.txt')
         with open(output_file, 'w') as f:
-            for polygon in self.all_wkt:
+            for polygon in self.wkt_union:
                 f.write(f"{polygon}\n")
         print("WKT unionised polygons have been written to file.")
         print("File path:", output_file)
