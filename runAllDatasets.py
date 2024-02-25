@@ -78,4 +78,3 @@ if __name__ == '__main__':
     #     bestAlpha.append(l.x[np.nanargmax(l.y)])
 
     print(f"Number of datasets: {len(datasets)}")
-    Dataset.loadData()

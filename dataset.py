@@ -548,7 +548,6 @@ def readSquentialWkb(self, eps):
 
         def polyGenerator(names):
             lastPoly = None
-            all_polygons = [] # This will hold all polygons
             for n in names:
                 poly = readWkbFile(n)
                 if not lastPoly:
