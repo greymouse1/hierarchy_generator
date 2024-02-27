@@ -2,6 +2,7 @@ import networkx as nx
 from shapely.ops import unary_union
 from shapely.geometry import Polygon
 import geopandas as gpd
+import pandas as pd
 
 # whole function which builds tree with all nodes and surface areas
 # input wkb text file with all triangles, first line are original building polygons
@@ -44,7 +45,7 @@ def treeGenerator(wkb_text_file):
 
     # since first line had initial polygons, and triangles are starting from the second line
     # loop will iterate from second line to the end
-    for line in wkb_text_file[6:7]:
+    for line in wkb_text_file[1:]:
 
         # get coordinates for all triangles in current line
         # now perform unary union of these triangles if there is more than one triangle
@@ -73,16 +74,17 @@ def treeGenerator(wkb_text_file):
             # Now extract geometries into a list
             filtered_polygons_geometries = filtered_polygons['geometry'].tolist()
             triangles_and_polygons = unary_union([all_triangles, unary_union(filtered_polygons_geometries)])
-            print(triangles_and_polygons)
 
             # now storage with original polygons needs to be updated for changes
             # concatenate the IDs from the list
             new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
             new_entry = {'ID': new_id, 'geometry': triangles_and_polygons}
-            polygon_storage = polygon_storage.append(new_entry)
-
+            new_entry_gdf = gpd.GeoDataFrame([new_entry], geometry='geometry')
+            polygon_storage = pd.concat([polygon_storage,new_entry_gdf], ignore_index=True)
+            print("success")
             # now we update the starting storage since this one is used for checking all new triangles
-            polygons_gdf = polygon_storage.append(new_entry)
+            # it will have old polygons deleted and new ones added
+            polygons_gdf = pd.concat([polygons_gdf,new_entry_gdf], ignore_index=True)
 
             # now use mask created before and invert it with tilde so all entries except the ones in the mask will be kept
             inverted_mask = ~polygons_gdf['ID'].isin(intersecting_polygons_ids)
@@ -90,11 +92,10 @@ def treeGenerator(wkb_text_file):
             # filter the GeoDataFrame using the boolean mask to remove rows with specified IDs
             polygons_gdf = polygons_gdf[inverted_mask]
 
-
-
         else:
             next
 
+    print(polygon_storage)
 
 
 

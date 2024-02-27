@@ -32,7 +32,7 @@ if __name__ == '__main__':
     path = "/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/testing/data"
     method = "tri"
     folder = method
-    args = TempArgs(epsilon=0.1, path=folder + "/{}{}")
+    args = TempArgs(epsilon=0.01, path=folder + "/{}{}")
 
     datasets = []
     #Retrieve all datasets
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         f"-t {1} -p \"{path_string}\""
         print(command)
         os.system(command)
-        # estr = ""
+        estr = ""
         # for epsilon in epsilons:
         #     if not os.path.exists(dataset.data[epsilon]["path_table"]):
         #         if len(estr) > 0:
