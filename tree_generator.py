@@ -3,10 +3,13 @@ from shapely.ops import unary_union
 from shapely.geometry import Polygon
 import geopandas as gpd
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # whole function which builds tree with all nodes and surface areas
 # input wkb text file with all triangles, first line are original building polygons
 def treeGenerator(wkb_text_file):
+    # Create an empty graph
+    G = nx.DiGraph()
 
     # create object which will store starting polygons and their unique id's
     # this will be updated as polygons get merged
@@ -40,6 +43,15 @@ def treeGenerator(wkb_text_file):
     # respective IDs and surface areas
     polygon_storage = polygons_gdf.copy()
 
+    # add starting nodes
+    # iterate over rows of the polygon_storage
+    for index, row in polygon_storage.iterrows():
+        # get Id and geometry
+        node_id = row['ID']
+        geometry = row['geometry']
+
+        # add node for current polygon
+        G.add_node(node_id, geometry=geometry)
     # add AREA to data frame
     # polygon_storage['AREA'] = polygon_storage['geometry'].area
 
@@ -76,12 +88,20 @@ def treeGenerator(wkb_text_file):
             triangles_and_polygons = unary_union([all_triangles, unary_union(filtered_polygons_geometries)])
 
             # now storage with original polygons needs to be updated for changes
-            # concatenate the IDs from the list
+            # concatenate the IDs from the list, this storage keeps original polygons
             new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
             new_entry = {'ID': new_id, 'geometry': triangles_and_polygons}
             new_entry_gdf = gpd.GeoDataFrame([new_entry], geometry='geometry')
             polygon_storage = pd.concat([polygon_storage,new_entry_gdf], ignore_index=True)
             print("success")
+
+            # add new node for new merged polygon
+            G.add_node(new_id, geometry=triangles_and_polygons)
+            edges = []
+            for id in intersecting_polygons_ids:
+                new_edge = (id,new_id)
+                edges.append(new_edge)
+            G.add_edges_from(edges)
             # now we update the starting storage since this one is used for checking all new triangles
             # it will have old polygons deleted and new ones added
             polygons_gdf = pd.concat([polygons_gdf,new_entry_gdf], ignore_index=True)
@@ -96,6 +116,13 @@ def treeGenerator(wkb_text_file):
             next
 
     print(polygon_storage)
+
+    print(G.nodes)
+    print(G.edges)
+
+    pos = nx.nx_pydot.graphviz_layout(G, prog='dot')
+    nx.draw(G, pos, with_labels=True, node_size=500, node_color='skyblue', font_size=12, font_weight='bold')
+    plt.show()
 
 
 
