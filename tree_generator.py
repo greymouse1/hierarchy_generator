@@ -10,7 +10,7 @@ import re
 # input wkb text file with all triangles, first line are original building polygons
 def treeGenerator(wkb_text_file):
     # Create an empty graph
-    G = nx.balanced_tree(3,5)
+    G = nx.DiGraph()
 
     # create object which will store starting polygons and their unique id's
     # this will be updated as polygons get merged
@@ -128,16 +128,21 @@ def treeGenerator(wkb_text_file):
     print(G.nodes)
     print(G.edges)
 
-    #pos = nx.nx_pydot.graphviz_layout(G, prog='dot')
-    #nx.draw(G, pos, with_labels=True, node_size=200, node_color='skyblue', font_size=12, font_weight='bold')
-    #plt.show()
-    #G = nx.balanced_tree(3, 5)
-    pos = nx.nx_agraph.graphviz_layout(G, prog="twopi", args="")
-    plt.figure(figsize=(8, 8))
-    nx.draw(G, pos, node_size=20, alpha=0.5, node_color="blue", with_labels=False)
-    plt.axis("equal")
+    # Draw the graph, remove geometry because pydot gets error if geometry is used
+    # It is not important here, this graph is just for drawing
+    # original graph keeps geometries
+    G_without_area = nx.DiGraph()
+    G_without_area.add_nodes_from(G.nodes)
+    G_without_area.add_edges_from(G.edges)
+
+    # pydot graph, fixed
+    pos = nx.nx_pydot.graphviz_layout(G_without_area, prog='dot')
+    nx.draw(G_without_area, pos, with_labels=True, node_size=200, node_color='skyblue', font_size=12, font_weight='bold')
     plt.show()
 
+    # below works well, plots tree into png
+    p = nx.drawing.nx_pydot.to_pydot(G_without_area)
+    p.write_png('example.png')
 
 
 
