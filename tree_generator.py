@@ -86,17 +86,21 @@ def treeGenerator(wkb_text_file):
             # Now extract geometries into a list
             filtered_polygons_geometries = filtered_polygons['geometry'].tolist()
             triangles_and_polygons = unary_union([all_triangles, unary_union(filtered_polygons_geometries)])
-
+            print("Triangles and polygons union")
+            print(triangles_and_polygons)
             # now storage with original polygons needs to be updated for changes
             # concatenate the IDs from the list, this storage keeps original polygons
+            # no triangles are merged here, just original polygons go in this storage
+            # even when "merged" polgon is considered it will still have area of only
+            # original polygons without the triangles
             new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
-            new_entry = {'ID': new_id, 'geometry': triangles_and_polygons}
+            new_entry = {'ID': new_id, 'geometry': unary_union(filtered_polygons_geometries)}
             new_entry_gdf = gpd.GeoDataFrame([new_entry], geometry='geometry')
             polygon_storage = pd.concat([polygon_storage,new_entry_gdf], ignore_index=True)
             print("success")
 
             # add new node for new merged polygon
-            G.add_node(new_id, geometry=triangles_and_polygons)
+            G.add_node(new_id, geometry=unary_union(filtered_polygons_geometries))
             edges = []
             for id in intersecting_polygons_ids:
                 new_edge = (id,new_id)
@@ -116,7 +120,7 @@ def treeGenerator(wkb_text_file):
             next
 
     print(polygon_storage)
-
+    polygon_storage.to_file("tree_polygons.shp")
     print(G.nodes)
     print(G.edges)
 
