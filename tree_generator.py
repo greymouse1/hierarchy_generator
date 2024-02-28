@@ -4,12 +4,13 @@ from shapely.geometry import Polygon
 import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
+import re
 
 # whole function which builds tree with all nodes and surface areas
 # input wkb text file with all triangles, first line are original building polygons
 def treeGenerator(wkb_text_file):
     # Create an empty graph
-    G = nx.DiGraph()
+    G = nx.balanced_tree(3,5)
 
     # create object which will store starting polygons and their unique id's
     # this will be updated as polygons get merged
@@ -17,7 +18,8 @@ def treeGenerator(wkb_text_file):
     def polygon_parser(input_line):
         polygons = []
         input_line = str(input_line)
-        for polygon_str in input_line.split(")), (("):
+        input_line = re.split(r"\)\), \(\(|\), \(", input_line) # split by polygons and nested polygons
+        for polygon_str in input_line:
             # remove unnecessary characters
             polygon_str = polygon_str.replace("MULTIPOLYGON (((", "").replace(")))", "").replace(")), ((", ")),((")
             # extract coordinates
@@ -73,11 +75,11 @@ def treeGenerator(wkb_text_file):
             if all_triangles.intersects(polygon_geometry):
                 intersecting_polygons_ids.append(polygon_id)
 
-        if intersecting_polygons_ids:
-            print("Polygons from the second group that intersect with the polygon in the first group:")
-            print(intersecting_polygons_ids)
-        else:
-            print("No polygon from the second group intersects with the polygon in the first group")
+        #if intersecting_polygons_ids:
+            #print("Polygons from the second group that intersect with the polygon in the first group:")
+            #print(intersecting_polygons_ids)
+        #else:
+            #print("No polygon from the second group intersects with the polygon in the first group")
 
         if len(intersecting_polygons_ids) > 1:
             # Create a boolean mask to filter rows with IDs present in the list
@@ -86,18 +88,20 @@ def treeGenerator(wkb_text_file):
             # Now extract geometries into a list
             filtered_polygons_geometries = filtered_polygons['geometry'].tolist()
             triangles_and_polygons = unary_union([all_triangles, unary_union(filtered_polygons_geometries)])
-            print("Triangles and polygons union")
-            print(triangles_and_polygons)
+            #print("Triangles and polygons union")
+            #print(triangles_and_polygons)
             # now storage with original polygons needs to be updated for changes
             # concatenate the IDs from the list, this storage keeps original polygons
             # no triangles are merged here, just original polygons go in this storage
             # even when "merged" polgon is considered it will still have area of only
             # original polygons without the triangles
-            new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
+            # new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
+            last_id = polygon_storage.iloc[-1]['ID']
+            new_id = last_id + 1
             new_entry = {'ID': new_id, 'geometry': unary_union(filtered_polygons_geometries)}
             new_entry_gdf = gpd.GeoDataFrame([new_entry], geometry='geometry')
             polygon_storage = pd.concat([polygon_storage,new_entry_gdf], ignore_index=True)
-            print("success")
+            #print("success")
 
             # add new node for new merged polygon
             G.add_node(new_id, geometry=unary_union(filtered_polygons_geometries))
@@ -124,8 +128,14 @@ def treeGenerator(wkb_text_file):
     print(G.nodes)
     print(G.edges)
 
-    pos = nx.nx_pydot.graphviz_layout(G, prog='dot')
-    nx.draw(G, pos, with_labels=True, node_size=500, node_color='skyblue', font_size=12, font_weight='bold')
+    #pos = nx.nx_pydot.graphviz_layout(G, prog='dot')
+    #nx.draw(G, pos, with_labels=True, node_size=200, node_color='skyblue', font_size=12, font_weight='bold')
+    #plt.show()
+    #G = nx.balanced_tree(3, 5)
+    pos = nx.nx_agraph.graphviz_layout(G, prog="twopi", args="")
+    plt.figure(figsize=(8, 8))
+    nx.draw(G, pos, node_size=20, alpha=0.5, node_color="blue", with_labels=False)
+    plt.axis("equal")
     plt.show()
 
 
