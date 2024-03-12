@@ -93,7 +93,7 @@ def treeGenerator(wkb_text_file):
             # now storage with original polygons needs to be updated for changes
             # concatenate the IDs from the list, this storage keeps original polygons
             # no triangles are merged here, just original polygons go in this storage
-            # even when "merged" polgon is considered it will still have area of only
+            # even when "merged" poligon is considered it will still have area of only
             # original polygons without the triangles
             # new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
             last_id = polygon_storage.iloc[-1]['ID']
@@ -123,6 +123,7 @@ def treeGenerator(wkb_text_file):
         else:
             next
 
+
     print(polygon_storage)
     polygon_storage.to_file("tree_polygons.shp")
     print(G.nodes)
@@ -143,6 +144,10 @@ def treeGenerator(wkb_text_file):
     # below works well, plots tree into png
     p = nx.drawing.nx_pydot.to_pydot(G_without_area)
     p.write_png('example.png')
+
+    print("Graph is returned")
+    return G
+
 
 
 
