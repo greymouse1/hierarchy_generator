@@ -3,13 +3,15 @@ from dataset import Dataset
 from tree_generator import treeGenerator
 
 # Instantiate the Dataset class
-dataset = Dataset(name='ahrem_medium',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/ahrem_medium',epsilon=0)
+dataset1 = Dataset(name='zentrum_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/zentrum_atkis',epsilon=0)
+dataset2 = Dataset(name='zentrum_osm',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/zentrum_osm',epsilon=0)
 
 # Load data with eps=0
-dataset.loadData(0)
-
+dataset1.loadData(0)
+dataset2.loadData(0)
 # Get wkt in file
-dataset.get_wkt()
+dataset1.get_wkt()
+dataset2.get_wkt()
 
 # Get wkt unions in file - not really necessary anymore
 # dataset.get_wkt_unions()
@@ -17,16 +19,11 @@ dataset.get_wkt()
 # Generate tree
 # Right now I can use "dataset" class instance from above, I could as well
 # use .txt file directly which was created with dataset.get_wkt()
-T1 = treeGenerator(dataset.all_wkt)
+# insert tree name after file name
+T1 = treeGenerator(dataset1.all_wkt,"T1")
+T2 = treeGenerator(dataset2.all_wkt,"T2")
 
-print("Nodes:")
-for node, attrs in T1.nodes(data=True):
-    print(f"Node {node}: {attrs}")
 
-# Print edges and their attributes
-print("\nEdges:")
-for u, v, attrs in T1.edges(data=True):
-    print(f"Edge {u}-{v}: {attrs}")
 
 # Calculate weights
 # Weights will be calculated between two trees, T1 and T2

@@ -8,7 +8,7 @@ import re
 
 # whole function which builds tree with all nodes and surface areas
 # input wkb text file with all triangles, first line are original building polygons
-def treeGenerator(wkb_text_file):
+def treeGenerator(wkb_text_file,tree_name):
     # Create an empty graph
     G = nx.DiGraph()
 
@@ -125,7 +125,7 @@ def treeGenerator(wkb_text_file):
 
 
     print(polygon_storage)
-    polygon_storage.to_file("tree_polygons.shp")
+    # polygon_storage.to_file("tree_polygons.shp") this is not needed right now
     print(G.nodes)
     print(G.edges)
 
@@ -143,10 +143,31 @@ def treeGenerator(wkb_text_file):
 
     # below works well, plots tree into png
     p = nx.drawing.nx_pydot.to_pydot(G_without_area)
-    p.write_png('example.png')
+    p.write_png(f'{tree_name}_topography.png')
 
     print("Graph is returned")
     return G
+
+def jaccardIndex(tree1,tree2):
+
+    # create new empty graph
+    # this graph will hold edges between two trees and their weights/Jaccard indexes
+    G = nx.Graph()
+
+    # since the code doesn't know which node of a tree is root node, it has to pull it out, for each tree
+    tree1_root = next(nx.topological_sort(tree1))
+    tree2_root = next(nx.topological_sort(tree2))
+
+    # now I need whole topology of each tree below root
+    subtree_tree1 = nx.dfs_tree(tree1_root)
+    subtree_tree2 = nx.dfs_tree(tree2_root)
+
+    # now is start iterating; I check each node from tree1 with every node from tree 2, from root to leaves
+    # if there is a node in tree 2 for which intersection is 0, then whole subtree of that node is removed from tree 2
+    # iterator, so children wouldn't be checked in the following iterations (since if intersection with parent is 0, that
+    # means intersection with every child will also be 0
+    # as edges between trees are checked and Jaccard Index is calculated, resulting deges with JI are packed
+    # into a new graph
 
 
 
