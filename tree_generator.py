@@ -1,4 +1,5 @@
 import networkx as nx
+import shapely.geometry as sg
 from shapely.ops import unary_union
 from shapely.geometry import Polygon
 import geopandas as gpd
@@ -107,7 +108,7 @@ def treeGenerator(wkb_text_file,tree_name):
             G.add_node(new_id, geometry=unary_union(filtered_polygons_geometries))
             edges = []
             for id in intersecting_polygons_ids:
-                new_edge = (id,new_id)
+                new_edge = (new_id,id)
                 edges.append(new_edge)
             G.add_edges_from(edges)
             # now we update the starting storage since this one is used for checking all new triangles
@@ -157,10 +158,12 @@ def jaccardIndex(tree1,tree2):
     # since the code doesn't know which node of a tree is root node, it has to pull it out, for each tree
     tree1_root = next(nx.topological_sort(tree1))
     tree2_root = next(nx.topological_sort(tree2))
+    print("Root 1",tree1_root)
+    print("Root 2", tree2_root)
 
     # now I need whole topology of each tree below root
-    subtree_tree1 = nx.dfs_tree(tree1_root)
-    subtree_tree2 = nx.dfs_tree(tree2_root)
+    # subtree_tree1 = nx.bfs_tree(tree1, tree1_root)
+    # subtree_tree2 = nx.dfs_tree(tree2, tree2_root)
 
     # now is start iterating; I check each node from tree1 with every node from tree 2, from root to leaves
     # if there is a node in tree 2 for which intersection is 0, then whole subtree of that node is removed from tree 2
@@ -168,6 +171,61 @@ def jaccardIndex(tree1,tree2):
     # means intersection with every child will also be 0
     # as edges between trees are checked and Jaccard Index is calculated, resulting deges with JI are packed
     # into a new graph
+
+    for node_id in nx.dfs_preorder_nodes(tree1,source=tree1_root): #order nodes in dfs order
+        geometry1 = tree1.nodes[node_id].get('geometry') # pull geometry from current node from tree 1
+        node1 = "T1_"+str(node_id)
+        G.add_node(node1,bipartite=0)
+
+        stack = [tree2_root]
+        visited = set()
+
+        while stack:
+            current_node = stack.pop()
+            node2 = "T2_"+str(current_node)
+            G.add_node(node2,bipartite=1)
+            visited.add(current_node)
+            geometry2 = tree2.nodes[current_node].get('geometry') # pull geometry from current node from tree 2
+            print("Visiting node:", current_node)
+
+            # Convert geometries to Shapely objects
+            geometry1_shp = sg.shape(geometry1)
+            geometry2_shp = sg.shape(geometry2)
+            intersection = geometry1_shp.intersection(geometry2_shp).area
+
+            # Check condition for the current node
+            if intersection == 0:
+                print(f"Nodes {node_id} and {current_node} aren't intersecting")
+                current_subtree = nx.dfs_preorder_nodes(tree2,current_node)
+                G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
+                continue  # Skip subtree if condition not satisfied
+
+            # create weight as Jaccard Index
+            union = geometry1_shp.union(geometry2_shp).area
+            jaccard_index = intersection / union
+            G.add_edge(node1,node2,weight=jaccard_index)
+
+            # Iterate through children and add them to stack
+            for child in tree2.successors(current_node):
+                if child not in visited:
+                    stack.append(child)
+
+    for u, v, data in G.edges(data=True):
+        weight = data.get('weight', None)
+        print(f"Edge ({u}, {v}) has weight {weight}")
+
+    # Generate lists of nodes based on their bipartite attribute
+    nodes_bipartite_0 = [n for n, d in G.nodes(data=True) if d['bipartite'] == 0]
+
+    # Generate layout for visualization
+    pos = nx.bipartite_layout(G, nodes_bipartite_0)
+
+    # Draw the graph
+    nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=500, font_size=12, font_weight='bold')
+    plt.title('Bipartite Graph Layout')
+    plt.show()
+
+    print(G)
 
 
 

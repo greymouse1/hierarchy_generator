@@ -1,6 +1,6 @@
 # Import the Dataset class from dataset.py
 from dataset import Dataset
-from tree_generator import treeGenerator
+from tree_generator import treeGenerator, jaccardIndex
 
 # Instantiate the Dataset class
 dataset1 = Dataset(name='zentrum_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/zentrum_atkis',epsilon=0)
@@ -23,8 +23,6 @@ dataset2.get_wkt()
 T1 = treeGenerator(dataset1.all_wkt,"T1")
 T2 = treeGenerator(dataset2.all_wkt,"T2")
 
-
-
 # Calculate weights
 # Weights will be calculated between two trees, T1 and T2
 # and each weight is associated with an edge e which connects vertex
@@ -42,3 +40,4 @@ T2 = treeGenerator(dataset2.all_wkt,"T2")
 # Graph of each tree contains edges between vertices and vertices. This edges should be
 # ignored and only vertices taken into account when jaccartIndex is performed
 
+jaccardIndex(T1,T2)
