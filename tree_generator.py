@@ -161,6 +161,13 @@ def jaccardIndex(tree1,tree2):
     print("Root 1",tree1_root)
     print("Root 2", tree2_root)
 
+    # Populate new graph
+    # Add nodes from graph1 with bipartite=0
+    G.add_nodes_from([("T1_" + str(node), {"bipartite": 0}) for node in tree1.nodes])
+
+    # Add nodes from graph2 with bipartite=1
+    G.add_nodes_from([("T2_" + str(node), {"bipartite": 1}) for node in tree2.nodes])
+
     # now I need whole topology of each tree below root
     # subtree_tree1 = nx.bfs_tree(tree1, tree1_root)
     # subtree_tree2 = nx.dfs_tree(tree2, tree2_root)
@@ -175,7 +182,7 @@ def jaccardIndex(tree1,tree2):
     for node_id in nx.dfs_preorder_nodes(tree1,source=tree1_root): #order nodes in dfs order
         geometry1 = tree1.nodes[node_id].get('geometry') # pull geometry from current node from tree 1
         node1 = "T1_"+str(node_id)
-        G.add_node(node1,bipartite=0)
+        #G.add_node(node1,bipartite=0)
 
         stack = [tree2_root]
         visited = set()
@@ -183,10 +190,20 @@ def jaccardIndex(tree1,tree2):
         while stack:
             current_node = stack.pop()
             node2 = "T2_"+str(current_node)
-            G.add_node(node2,bipartite=1)
+            #G.add_node(node2,bipartite=1)
             visited.add(current_node)
             geometry2 = tree2.nodes[current_node].get('geometry') # pull geometry from current node from tree 2
-            print("Visiting node:", current_node)
+            print(f"Checking pair {node1} and {node2}")
+
+            # First condition to be checked is if there is existing edge between node from T1 and T2
+            # If there is, it can only be 0 and in that case we disregard whole subtree for rooted at current
+            # node in T2, and proceed to the next available node
+
+            if G.has_edge(node1,node2):
+                print("edge 0 detected, avoid subtree rooted here, move to next node")
+                continue
+
+            # If there is no edge, code will continue with calculation of intersection as usual
 
             # Convert geometries to Shapely objects
             geometry1_shp = sg.shape(geometry1)
@@ -194,16 +211,22 @@ def jaccardIndex(tree1,tree2):
             intersection = geometry1_shp.intersection(geometry2_shp).area
 
             # Check condition for the current node
+            # If intersection is 0 for the current pair, get subtrees rooted in them and populated all the edges with
+            # weight 0
             if intersection == 0:
-                print(f"Nodes {node_id} and {current_node} aren't intersecting")
-                current_subtree = nx.dfs_preorder_nodes(tree2,current_node)
-                G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
+                print(f"Nodes {node1} and {node2} aren't intersecting")
+                current_subtree_T1 = nx.dfs_preorder_nodes(tree1,node_id)
+                current_subtree_T2 = nx.dfs_preorder_nodes(tree2,current_node)
+                #G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
+                G.add_edges_from([("T1_"+str(u),"T2_"+str(v), {'weight': 0}) for u in current_subtree_T1 for v in current_subtree_T2])
                 continue  # Skip subtree if condition not satisfied
 
+            # If intersection is != 0 then calculate weight
             # create weight as Jaccard Index
             union = geometry1_shp.union(geometry2_shp).area
             jaccard_index = intersection / union
             G.add_edge(node1,node2,weight=jaccard_index)
+            print("added weight for edges")
 
             # Iterate through children and add them to stack
             for child in tree2.successors(current_node):
@@ -213,6 +236,9 @@ def jaccardIndex(tree1,tree2):
     for u, v, data in G.edges(data=True):
         weight = data.get('weight', None)
         print(f"Edge ({u}, {v}) has weight {weight}")
+
+    for u, v, attrs in G.edges('T2_31', data=True):
+        print(f"Edge from {u} to {v} with attributes: {attrs}")
 
     # Generate lists of nodes based on their bipartite attribute
     nodes_bipartite_0 = [n for n, d in G.nodes(data=True) if d['bipartite'] == 0]
