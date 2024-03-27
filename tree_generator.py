@@ -6,6 +6,7 @@ import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 import re
+from tqdm import tqdm
 
 # whole function which builds tree with all nodes and surface areas
 # input wkb text file with all triangles, first line are original building polygons
@@ -17,9 +18,13 @@ class treeGenerator:
         self.tree_root = []
         self.tree_leaves = []
         self.G = nx.DiGraph()
-
+        # List which will store all unique shortest paths from root to each leaf
+        self.leaf_list = []
         # Call method to run all calculations when instance of a class is initialized
         self.run_calculations()
+        # Call method to calculate shortest paths to each leaf, this has to be done after run_calculations
+        # because graph has to be finalised
+        self.calculateLeafs()
 
     # create object which will store starting polygons and their unique id's
     # this will be updated as polygons get merged
@@ -70,7 +75,7 @@ class treeGenerator:
 
         # since first line had initial polygons, and triangles are starting from the second line
         # loop will iterate from second line to the end
-        for line in self.wkb_text_file[1:]:
+        for line in tqdm(self.wkb_text_file[1:], desc=f"Tree {self.tree_name} is being built"):
 
             # get coordinates for all triangles in current line
             # now perform unary union of these triangles if there is more than one triangle
@@ -137,12 +142,12 @@ class treeGenerator:
 
             else:
                 next
-
-
-        print(polygon_storage)
         # polygon_storage.to_file("tree_polygons.shp") this is not needed right now
-        print(self.G.nodes)
-        print(self.G.edges)
+
+    def calculateLeafs(self):
+        for i in range(len(self.tree_leaves)):
+            self.leaf_list.append(nx.shortest_path(self.G, source=self.tree_root[0], target=self.tree_leaves[i]))
+
     def drawGraph(self):
         # Draw the graph, remove geometry because pydot gets error if geometry is used
         # It is not important here, this graph is just for drawing
@@ -190,7 +195,7 @@ def jaccardIndex(tree1,tree2):
     # as edges between trees are checked and Jaccard Index is calculated, resulting deges with JI are packed
     # into a new graph
 
-    for node_id in nx.dfs_preorder_nodes(tree1.G,source=tree1_root): #order nodes in dfs order
+    for node_id in tqdm(nx.dfs_preorder_nodes(tree1.G,source=tree1_root),desc="Calculating Jaccard Index between nodes"): #order nodes in dfs order
         geometry1 = tree1.G.nodes[node_id].get('geometry') # pull geometry from current node from tree 1
         node1 = node_id
         #G.add_node(node1,bipartite=0)
@@ -204,7 +209,6 @@ def jaccardIndex(tree1,tree2):
             #G.add_node(node2,bipartite=1)
             visited.add(current_node)
             geometry2 = tree2.G.nodes[current_node].get('geometry') # pull geometry from current node from tree 2
-            print(f"Checking pair {node1} and {node2}")
 
             # First condition to be checked is if there is existing edge between node from T1 and T2
             # If there is, it can only be 0 and in that case we disregard whole subtree for rooted at current
@@ -225,11 +229,11 @@ def jaccardIndex(tree1,tree2):
             # If intersection is 0 for the current pair, get subtrees rooted in them and populated all the edges with
             # weight 0
             if intersection == 0:
-                print(f"Nodes {node1} and {node2} aren't intersecting")
-                current_subtree_T1 = nx.dfs_preorder_nodes(tree1.G,node_id)
-                current_subtree_T2 = nx.dfs_preorder_nodes(tree2.G,current_node)
-                #G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
-                G.add_edges_from([(u,v, {'weight': 0}) for u in current_subtree_T1 for v in current_subtree_T2])
+                #print(f"Nodes {node1} and {node2} aren't intersecting")
+                #current_subtree_T1 = nx.dfs_preorder_nodes(tree1.G,node_id)
+                #current_subtree_T2 = nx.dfs_preorder_nodes(tree2.G,current_node)
+                ##G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
+                #G.add_edges_from([(u,v, {'weight': 0}) for u in current_subtree_T1 for v in current_subtree_T2])
                 continue  # Skip subtree if condition not satisfied
 
             # If intersection is != 0 then calculate weight
@@ -237,32 +241,31 @@ def jaccardIndex(tree1,tree2):
             union = geometry1_shp.union(geometry2_shp).area
             jaccard_index = intersection / union
             G.add_edge(node1,node2,weight=jaccard_index)
-            print("added weight for edges")
 
             # Iterate through children and add them to stack
             for child in tree2.G.successors(current_node):
                 if child not in visited:
                     stack.append(child)
 
-    for u, v, data in G.edges(data=True):
-        weight = data.get('weight', None)
-        print(f"Edge ({u}, {v}) has weight {weight}")
+    # Code for plotting which is not really necessary
+    #for u, v, data in G.edges(data=True):
+    #    weight = data.get('weight', None)
+    #    print(f"Edge ({u}, {v}) has weight {weight}")
 
-    for u, v, attrs in G.edges('T2_31', data=True):
-        print(f"Edge from {u} to {v} with attributes: {attrs}")
+    #for u, v, attrs in G.edges('T2_31', data=True):
+    #    print(f"Edge from {u} to {v} with attributes: {attrs}")
 
     # Generate lists of nodes based on their bipartite attribute
-    nodes_bipartite_0 = [n for n, d in G.nodes(data=True) if d['bipartite'] == 0]
+    #nodes_bipartite_0 = [n for n, d in G.nodes(data=True) if d['bipartite'] == 0]
 
     # Generate layout for visualization
-    pos = nx.bipartite_layout(G, nodes_bipartite_0)
+    #pos = nx.bipartite_layout(G, nodes_bipartite_0)
 
     # Draw the graph
-    nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=500, font_size=12, font_weight='bold')
-    plt.title('Bipartite Graph Layout')
-    plt.show()
-
-    print(G)
+    #nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=500, font_size=12, font_weight='bold')
+    #plt.title('Bipartite Graph Layout')
+    #plt.show()
+    return G
 
 
 

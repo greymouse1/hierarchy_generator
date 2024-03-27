@@ -1,6 +1,8 @@
 # Import the Dataset class from dataset.py
 from dataset import Dataset
 from tree_generator import treeGenerator, jaccardIndex
+from gurobipy import *
+import networkx as nx
 
 # Instantiate the Dataset class
 dataset1 = Dataset(name='zentrum_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/zentrum_atkis',epsilon=0)
@@ -23,13 +25,6 @@ dataset2.get_wkt()
 T1 = treeGenerator(dataset1.all_wkt,"T1")
 T2 = treeGenerator(dataset2.all_wkt,"T2")
 
-print(T1.G)
-print(T2.G)
-print(T1.tree_leaves)
-print(T2.tree_leaves)
-print(T1.tree_root)
-print(T2.tree_root)
-
 # Calculate weights
 # Weights will be calculated between two trees, T1 and T2
 # and each weight is associated with an edge e which connects vertex
@@ -47,4 +42,50 @@ print(T2.tree_root)
 # Graph of each tree contains edges between vertices and vertices. This edges should be
 # ignored and only vertices taken into account when jaccartIndex is performed
 
-#jaccardIndex(T1,T2)
+weighted_graph = jaccardIndex(T1,T2)
+print(weighted_graph)
+
+nx.write_weighted_edgelist(weighted_graph, "graph_data.csv")
+
+
+# Run Gurobi optimization
+
+# Set the data
+# First list of weights
+w = [weighted_graph.edges[edge]['weight'] for edge in weighted_graph.edges()]
+# Second set of edges, which have aligned indexes with weights
+e = [edge for edge in weighted_graph.edges()]
+# Set number of all edges
+N = len(w)
+# Create the model
+optimization_model = Model("bipartite solver")
+# Add decision variables x
+x = optimization_model.addVars(N,vtype=GRB.BINARY, name="x")
+# Define objective function
+obj_function = sum(w[i]*x[i] for i in range(N))
+optimization_model.setObjective(obj_function,GRB.MAXIMIZE)
+# Set constraints
+for path in T1.leaf_list:
+    edges = weighted_graph.edges(path)
+    indexes = [e.index(tuple_) for tuple_ in edges if tuple_ in e]
+    optimization_model.addConstr(sum(x[i] for i in indexes) <= 1)
+
+for path in T2.leaf_list:
+    edges = weighted_graph.edges(path)
+    indexes = [e.index(tuple_) for tuple_ in edges if tuple_ in e]
+    optimization_model.addConstr(sum(x[i] for i in indexes) <= 1)
+
+optimization_model.optimize()
+
+matched_indexes = []
+for v in optimization_model.getVars():
+    if v.x == 1:
+        print( '%s: %g ' % (v.varName,v.x))
+        matched_indexes.append(int(v.varName.split('[')[1].split(']')[0]))
+for i in matched_indexes:
+    print(e[i])
+
+
+
+
+
