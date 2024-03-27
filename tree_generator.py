@@ -61,9 +61,9 @@ class treeGenerator:
             node_id = row['ID']
             geometry = row['geometry']
             #append starting polygons which are later on considered leaves
-            self.tree_leaves.append(node_id)
+            self.tree_leaves.append(self.tree_name + "_" + str(node_id))
             # add node for current polygon
-            self.G.add_node(node_id, geometry=geometry)
+            self.G.add_node(self.tree_name + "_" + str(node_id), geometry=geometry)
 
         # add AREA to data frame
         # polygon_storage['AREA'] = polygon_storage['geometry'].area
@@ -117,12 +117,12 @@ class treeGenerator:
                 #print("success")
 
                 # log current node, once code comes to end, this will hold root
-                self.tree_root.append(new_id)
+                self.tree_root.append(self.tree_name + "_" + str(new_id))
                 # add new node for new merged polygon
-                self.G.add_node(new_id, geometry=unary_union(filtered_polygons_geometries))
+                self.G.add_node(self.tree_name + "_" + str(new_id), geometry=unary_union(filtered_polygons_geometries))
                 edges = []
                 for id in intersecting_polygons_ids:
-                    new_edge = (new_id,id)
+                    new_edge = (self.tree_name + "_" + str(new_id),self.tree_name + "_" + str(id))
                     edges.append(new_edge)
                 self.G.add_edges_from(edges)
                 # now we update the starting storage since this one is used for checking all new triangles
@@ -174,10 +174,10 @@ def jaccardIndex(tree1,tree2):
 
     # Populate new graph
     # Add nodes from graph1 with bipartite=0
-    G.add_nodes_from([("T1_" + str(node), {"bipartite": 0}) for node in tree1.G.nodes])
+    G.add_nodes_from([(node, {"bipartite": 0}) for node in tree1.G.nodes])
 
     # Add nodes from graph2 with bipartite=1
-    G.add_nodes_from([("T2_" + str(node), {"bipartite": 1}) for node in tree2.G.nodes])
+    G.add_nodes_from([(node, {"bipartite": 1}) for node in tree2.G.nodes])
 
     # now I need whole topology of each tree below root
     # subtree_tree1 = nx.bfs_tree(tree1, tree1_root)
@@ -192,7 +192,7 @@ def jaccardIndex(tree1,tree2):
 
     for node_id in nx.dfs_preorder_nodes(tree1.G,source=tree1_root): #order nodes in dfs order
         geometry1 = tree1.G.nodes[node_id].get('geometry') # pull geometry from current node from tree 1
-        node1 = "T1_"+str(node_id)
+        node1 = node_id
         #G.add_node(node1,bipartite=0)
 
         stack = [tree2_root]
@@ -200,7 +200,7 @@ def jaccardIndex(tree1,tree2):
 
         while stack:
             current_node = stack.pop()
-            node2 = "T2_"+str(current_node)
+            node2 = current_node
             #G.add_node(node2,bipartite=1)
             visited.add(current_node)
             geometry2 = tree2.G.nodes[current_node].get('geometry') # pull geometry from current node from tree 2
@@ -229,7 +229,7 @@ def jaccardIndex(tree1,tree2):
                 current_subtree_T1 = nx.dfs_preorder_nodes(tree1.G,node_id)
                 current_subtree_T2 = nx.dfs_preorder_nodes(tree2.G,current_node)
                 #G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
-                G.add_edges_from([("T1_"+str(u),"T2_"+str(v), {'weight': 0}) for u in current_subtree_T1 for v in current_subtree_T2])
+                G.add_edges_from([(u,v, {'weight': 0}) for u in current_subtree_T1 for v in current_subtree_T2])
                 continue  # Skip subtree if condition not satisfied
 
             # If intersection is != 0 then calculate weight
