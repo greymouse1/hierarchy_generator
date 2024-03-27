@@ -167,17 +167,17 @@ def jaccardIndex(tree1,tree2):
     G = nx.Graph()
 
     # since the code doesn't know which node of a tree is root node, it has to pull it out, for each tree
-    tree1_root = next(nx.topological_sort(tree1))
-    tree2_root = next(nx.topological_sort(tree2))
+    tree1_root = tree1.tree_root[0]
+    tree2_root = tree2.tree_root[0]
     print("Root 1",tree1_root)
     print("Root 2", tree2_root)
 
     # Populate new graph
     # Add nodes from graph1 with bipartite=0
-    G.add_nodes_from([("T1_" + str(node), {"bipartite": 0}) for node in tree1.nodes])
+    G.add_nodes_from([("T1_" + str(node), {"bipartite": 0}) for node in tree1.G.nodes])
 
     # Add nodes from graph2 with bipartite=1
-    G.add_nodes_from([("T2_" + str(node), {"bipartite": 1}) for node in tree2.nodes])
+    G.add_nodes_from([("T2_" + str(node), {"bipartite": 1}) for node in tree2.G.nodes])
 
     # now I need whole topology of each tree below root
     # subtree_tree1 = nx.bfs_tree(tree1, tree1_root)
@@ -190,8 +190,8 @@ def jaccardIndex(tree1,tree2):
     # as edges between trees are checked and Jaccard Index is calculated, resulting deges with JI are packed
     # into a new graph
 
-    for node_id in nx.dfs_preorder_nodes(tree1,source=tree1_root): #order nodes in dfs order
-        geometry1 = tree1.nodes[node_id].get('geometry') # pull geometry from current node from tree 1
+    for node_id in nx.dfs_preorder_nodes(tree1.G,source=tree1_root): #order nodes in dfs order
+        geometry1 = tree1.G.nodes[node_id].get('geometry') # pull geometry from current node from tree 1
         node1 = "T1_"+str(node_id)
         #G.add_node(node1,bipartite=0)
 
@@ -203,7 +203,7 @@ def jaccardIndex(tree1,tree2):
             node2 = "T2_"+str(current_node)
             #G.add_node(node2,bipartite=1)
             visited.add(current_node)
-            geometry2 = tree2.nodes[current_node].get('geometry') # pull geometry from current node from tree 2
+            geometry2 = tree2.G.nodes[current_node].get('geometry') # pull geometry from current node from tree 2
             print(f"Checking pair {node1} and {node2}")
 
             # First condition to be checked is if there is existing edge between node from T1 and T2
@@ -226,8 +226,8 @@ def jaccardIndex(tree1,tree2):
             # weight 0
             if intersection == 0:
                 print(f"Nodes {node1} and {node2} aren't intersecting")
-                current_subtree_T1 = nx.dfs_preorder_nodes(tree1,node_id)
-                current_subtree_T2 = nx.dfs_preorder_nodes(tree2,current_node)
+                current_subtree_T1 = nx.dfs_preorder_nodes(tree1.G,node_id)
+                current_subtree_T2 = nx.dfs_preorder_nodes(tree2.G,current_node)
                 #G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
                 G.add_edges_from([("T1_"+str(u),"T2_"+str(v), {'weight': 0}) for u in current_subtree_T1 for v in current_subtree_T2])
                 continue  # Skip subtree if condition not satisfied
@@ -240,7 +240,7 @@ def jaccardIndex(tree1,tree2):
             print("added weight for edges")
 
             # Iterate through children and add them to stack
-            for child in tree2.successors(current_node):
+            for child in tree2.G.successors(current_node):
                 if child not in visited:
                     stack.append(child)
 
