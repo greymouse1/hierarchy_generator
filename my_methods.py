@@ -65,15 +65,17 @@ x = optimization_model.addVars(N,vtype=GRB.BINARY, name="x")
 obj_function = sum(w[i]*x[i] for i in range(N))
 optimization_model.setObjective(obj_function,GRB.MAXIMIZE)
 # Set constraints
-for path in T1.leaf_list:
-    edges = weighted_graph.edges(path)
-    indexes = [e.index(tuple_) for tuple_ in edges if tuple_ in e]
-    optimization_model.addConstr(sum(x[i] for i in indexes) <= 1)
+def setConstraints(input_tree):
+    for path in input_tree.leaf_list:
+        edges = weighted_graph.edges(path)
+        indexes = [e.index(tuple_) for tuple_ in edges if tuple_ in e]
+        constraint_sum = sum(x[i] for i in indexes)
+        optimization_model.addConstr(constraint_sum <= 1)
+        leaf_node = path[-1]
+        print(f"Constraint sum for path {path}: {constraint_sum}")
 
-for path in T2.leaf_list:
-    edges = weighted_graph.edges(path)
-    indexes = [e.index(tuple_) for tuple_ in edges if tuple_ in e]
-    optimization_model.addConstr(sum(x[i] for i in indexes) <= 1)
+for tree in [T1,T2]:
+    setConstraints(tree)
 
 optimization_model.optimize()
 
