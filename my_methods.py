@@ -3,6 +3,7 @@ from dataset import Dataset
 from tree_generator import treeGenerator, jaccardIndex
 from gurobipy import *
 import networkx as nx
+from tqdm import tqdm
 
 # Instantiate the Dataset class
 dataset1 = Dataset(name='zentrum_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/zentrum_atkis',epsilon=0)
@@ -65,17 +66,18 @@ x = optimization_model.addVars(N,vtype=GRB.BINARY, name="x")
 obj_function = sum(w[i]*x[i] for i in range(N))
 optimization_model.setObjective(obj_function,GRB.MAXIMIZE)
 # Set constraints
-def setConstraints(input_tree):
-    for path in input_tree.leaf_list:
-        edges = weighted_graph.edges(path)
-        indexes = [e.index(tuple_) for tuple_ in edges if tuple_ in e]
-        constraint_sum = sum(x[i] for i in indexes)
-        optimization_model.addConstr(constraint_sum <= 1)
-        leaf_node = path[-1]
-        print(f"Constraint sum for path {path}: {constraint_sum}")
+#def setConstraints(input_tree):
+for path in tqdm(T1.leaf_list, desc=f"Setting constraints for {T1}"):
+    edges = weighted_graph.edges(path)
+    indexes = [e.index(tuple_) for tuple_ in edges if tuple_ in e]
+    constraint_sum = sum(x[i] for i in indexes)
+    optimization_model.addConstr(constraint_sum <= 1)
 
-for tree in [T1,T2]:
-    setConstraints(tree)
+for path in tqdm(T2.leaf_list, desc=f"Setting constraints for {T2}"):
+    edges = weighted_graph.edges(path)
+    indexes = [e.index(tuple_[::-1]) for tuple_ in edges if tuple_[::-1] in e]
+    constraint_sum = sum(x[i] for i in indexes)
+    optimization_model.addConstr(constraint_sum <= 1)
 
 optimization_model.optimize()
 
