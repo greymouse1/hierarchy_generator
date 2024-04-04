@@ -142,6 +142,29 @@ class treeGenerator:
 
             else:
                 next
+        # This logic will check if polygons_gdf contains more than one element
+        # If everything is correct, it will contain only one element and that is the root
+        # If however there are more than one elements, that means we have some polygons which are
+        # too far away from everything else and Delaunay triangulation for them was not performed
+        # meaning that they are not connected with triangles to other polygons and can't be part of the tree
+        # In order for code to work, they have to be removed from graph G and list of leaves
+
+        # Check the length of polygons_gdf
+        if len(polygons_gdf) > 1:
+            # Pull IDs into a list
+            polygon_ids = polygons_gdf['ID'].tolist()
+
+            # Add tree name since IDs in the polygons_gdf are numbers
+            # And detect which are erroneous polygons IDs
+            modified_ids = [self.tree_name + "_" + str(id) for id in polygon_ids if self.tree_name + "_" + str(id) != self.tree_root[0]]
+            print("Polygons without triangles detected")
+            print("Removing excess polygons:",modified_ids)
+            # Remove IDs from networkx graph G
+            self.G.remove_nodes_from(modified_ids)
+
+            # Remove IDs from tree_leaves list
+            self.tree_leaves = [leaf for leaf in self.tree_leaves if leaf not in modified_ids]
+
         # polygon_storage.to_file("tree_polygons.shp") this is not needed right now
 
     def calculateLeafs(self):
@@ -177,6 +200,14 @@ def jaccardIndex(tree1,tree2):
     print("Root 1",tree1_root)
     print("Root 2", tree2_root)
 
+    # Precompute shapes and second tree successors for each node
+    geometry1_shp = {node_id: sg.shape(data['geometry']) for node_id, data in tree1.G.nodes(data=True)}
+    geometry2_shp = {node_id: sg.shape(data['geometry']) for node_id, data in tree2.G.nodes(data=True)}
+    tree2_successors = {node_id: list(tree2.G.successors(node_id)) for node_id in tree2.G.nodes()}
+
+    # Compute nodes of first tree in advance
+    dfs_preorder_nodes_tree1 = list(nx.dfs_preorder_nodes(tree1.G, source=tree1_root))
+
     # Populate new graph
     # Add nodes from graph1 with bipartite=0
     G.add_nodes_from([(node, {"bipartite": 0}) for node in tree1.G.nodes])
@@ -195,8 +226,12 @@ def jaccardIndex(tree1,tree2):
     # as edges between trees are checked and Jaccard Index is calculated, resulting deges with JI are packed
     # into a new graph
 
-    for node_id in tqdm(nx.dfs_preorder_nodes(tree1.G,source=tree1_root),desc="Calculating Jaccard Index between nodes"): #order nodes in dfs order
-        geometry1 = tree1.G.nodes[node_id].get('geometry') # pull geometry from current node from tree 1
+    # Edges to be added
+    edges_to_add = []
+
+    for node_id in tqdm(dfs_preorder_nodes_tree1,desc="Calculating Jaccard Index between nodes"):
+        #order nodes in dfs order
+        geometry1 = geometry1_shp[node_id] # pull geometry from current node from tree 1
         node1 = node_id
         #G.add_node(node1,bipartite=0)
 
@@ -208,22 +243,20 @@ def jaccardIndex(tree1,tree2):
             node2 = current_node
             #G.add_node(node2,bipartite=1)
             visited.add(current_node)
-            geometry2 = tree2.G.nodes[current_node].get('geometry') # pull geometry from current node from tree 2
+            geometry2 = geometry2_shp[current_node] # pull geometry from current node from tree 2
 
             # First condition to be checked is if there is existing edge between node from T1 and T2
             # If there is, it can only be 0 and in that case we disregard whole subtree for rooted at current
             # node in T2, and proceed to the next available node
 
-            if G.has_edge(node1,node2):
-                print("edge 0 detected, avoid subtree rooted here, move to next node")
-                continue
+            #if G.has_edge(node1,node2):
+            #    print("edge 0 detected, avoid subtree rooted here, move to next node")
+            #    continue
 
             # If there is no edge, code will continue with calculation of intersection as usual
 
-            # Convert geometries to Shapely objects
-            geometry1_shp = sg.shape(geometry1)
-            geometry2_shp = sg.shape(geometry2)
-            intersection = geometry1_shp.intersection(geometry2_shp).area
+            # Try creating intersection
+            intersection = geometry1.intersection(geometry2).area
 
             # Check condition for the current node
             # If intersection is 0 for the current pair, get subtrees rooted in them and populated all the edges with
@@ -238,14 +271,19 @@ def jaccardIndex(tree1,tree2):
 
             # If intersection is != 0 then calculate weight
             # create weight as Jaccard Index
-            union = geometry1_shp.union(geometry2_shp).area
+            union = geometry1.union(geometry2).area
             jaccard_index = intersection / union
-            G.add_edge(node1,node2,weight=jaccard_index)
+            edges_to_add.append((node1,node2,jaccard_index))
+            #G.add_edge(node1,node2,weight=jaccard_index)
 
             # Iterate through children and add them to stack
-            for child in tree2.G.successors(current_node):
+            tree2_children = tree2_successors[current_node]
+            for child in tree2_children:
                 if child not in visited:
                     stack.append(child)
+
+    # Adding whole list of weighted edges outside the loop
+    G.add_weighted_edges_from(edges_to_add)
 
     # Code for plotting which is not really necessary
     #for u, v, data in G.edges(data=True):
