@@ -1,0 +1,27 @@
+2024-04-04 11:55:37 - Set parameter Username
+2024-04-04 11:55:37 - Academic license - for non-commercial use only - expires 2025-03-11
+2024-04-04 11:55:59 - Gurobi Optimizer version 11.0.1 build v11.0.1rc0 (mac64[x86] - Darwin 21.6.0 21H1015)
+2024-04-04 11:55:59 - 
+2024-04-04 11:55:59 - CPU model: Intel(R) Core(TM) i5-5257U CPU @ 2.70GHz
+2024-04-04 11:55:59 - Thread count: 2 physical cores, 4 logical processors, using up to 4 threads
+2024-04-04 11:55:59 - 
+2024-04-04 11:55:59 - Optimize a model with 586 rows, 36345 columns and 9001091 nonzeros
+2024-04-04 11:55:59 - Model fingerprint: 0xe5e4df9c
+2024-04-04 11:55:59 - Variable types: 0 continuous, 36345 integer (36345 binary)
+2024-04-04 11:55:59 - Coefficient statistics:
+2024-04-04 11:55:59 -   Matrix range     [1e+00, 1e+00]
+2024-04-04 11:55:59 -   Objective range  [1e-05, 1e+00]
+2024-04-04 11:55:59 -   Bounds range     [1e+00, 1e+00]
+2024-04-04 11:55:59 -   RHS range        [1e+00, 1e+00]
+2024-04-04 11:55:59 - Found heuristic solution: objective 0.0070350
+2024-04-04 11:56:04 - Presolve removed 586 rows and 36345 columns
+2024-04-04 11:56:04 - Presolve time: 4.93s
+2024-04-04 11:56:04 - Presolve: All rows and columns removed
+2024-04-04 11:56:04 - 
+2024-04-04 11:56:04 - Explored 0 nodes (0 simplex iterations) in 5.63 seconds (4.19 work units)
+2024-04-04 11:56:04 - Thread count was 1 (of 4 available processors)
+2024-04-04 11:56:04 - 
+2024-04-04 11:56:04 - Solution count 2: 205.753 0.00703504 
+2024-04-04 11:56:04 - 
+2024-04-04 11:56:04 - Optimal solution found (tolerance 1.00e-04)
+2024-04-04 11:56:04 - Best objective 2.057530349109e+02, best bound 2.057530349109e+02, gap 0.0000%

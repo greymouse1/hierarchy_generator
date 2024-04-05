@@ -4,19 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6a227628-013f-42b3-9b77-70e675bcf354" name="Changes" comment="Trying to call methods from dataset.py Managed to call function loadData">
-      <change afterPath="$PROJECT_DIR$/all_wkt_polygons.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testing/data/ahrem_small/ahrem_small.dbf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testing/data/ahrem_small/ahrem_small.shp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/testing/data/ahrem_small/ahrem_small.shx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/wkt_union_polygons.txt" afterDir="false" />
+    <list default="true" id="6a227628-013f-42b3-9b77-70e675bcf354" name="Changes" comment="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches.">
+      <change afterPath="$PROJECT_DIR$/output.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/pythonProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pythonProject.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dataset.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/my_methods.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_methods.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runAllDatasets.py" beforeDir="false" afterPath="$PROJECT_DIR$/runAllDatasets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gurobitest.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.dbf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.prj" beforeDir="false" afterPath="$PROJECT_DIR$/testing/data/ahrem_small/ahrem_small.prj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.prj" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.shp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.shx" beforeDir="false" />
     </list>
@@ -45,6 +42,9 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 6
 }</component>
@@ -60,12 +60,16 @@
   &quot;keyToString&quot;: {
     &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
     &quot;Python.dataset.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gurobitest.executor&quot;: &quot;Run&quot;,
+    &quot;Python.ji.executor&quot;: &quot;Run&quot;,
     &quot;Python.my_methods.executor&quot;: &quot;Run&quot;,
     &quot;Python.runAllDatasets.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tree_generator.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+    &quot;last_opened_file_path&quot;: &quot;/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder.nosync/pythonProject&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PythonContentEntriesConfigurable&quot;
   }
 }</component>
   <component name="SharedIndexes">
@@ -148,7 +152,175 @@
       <option name="project" value="LOCAL" />
       <updated>1708023344801</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Added methods for writing wkt and unionised wkt polygons to text files.">
+      <option name="closed" value="true" />
+      <created>1708798973202</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1708798973202</updated>
+    </task>
+    <task id="LOCAL-00010" summary="minor changes">
+      <option name="closed" value="true" />
+      <created>1708855490016</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1708855490016</updated>
+    </task>
+    <task id="LOCAL-00011" summary="bug fixed, both files were writing original triangles from jar file">
+      <option name="closed" value="true" />
+      <created>1708869186926</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1708869186927</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Start of tree generator">
+      <option name="closed" value="true" />
+      <created>1709042858554</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1709042858554</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Added code">
+      <option name="closed" value="true" />
+      <created>1709065902187</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1709065902187</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Code working. Graph not yet created, will be added in the next iteration.">
+      <option name="closed" value="true" />
+      <created>1709069258193</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1709069258193</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Code for drawing visualisation of a graph added">
+      <option name="closed" value="true" />
+      <created>1709071759335</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1709071759335</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Code changed so that storage with all polygons (old and new) contains only area surfaces for original polygons even for new parents">
+      <option name="closed" value="true" />
+      <created>1709110104211</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1709110104211</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Some adjustments added, new graph type tried">
+      <option name="closed" value="true" />
+      <created>1709122038481</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1709122038481</updated>
+    </task>
+    <task id="LOCAL-00018" summary="With working tree graphs now">
+      <option name="closed" value="true" />
+      <created>1709162397502</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1709162397503</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Gurobi test, Jaccart index start code">
+      <option name="closed" value="true" />
+      <created>1710250300376</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1710250300376</updated>
+    </task>
+    <task id="LOCAL-00020" summary="Some code updated">
+      <option name="closed" value="true" />
+      <created>1710329875437</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1710329875437</updated>
+    </task>
+    <task id="LOCAL-00021" summary="Working Jaccard Index">
+      <option name="closed" value="true" />
+      <created>1710428184247</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1710428184247</updated>
+    </task>
+    <task id="LOCAL-00022" summary="Code optimized (looks like), subtrees are populated with w=0 if there is no intersection between roots.">
+      <option name="closed" value="true" />
+      <created>1710497562956</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1710497562956</updated>
+    </task>
+    <task id="LOCAL-00023" summary="tree_generator is rewritten with classes">
+      <option name="closed" value="true" />
+      <created>1711538512049</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1711538512049</updated>
+    </task>
+    <task id="LOCAL-00024" summary="Adjusted jaccardIndex to accept new treeGenerator class">
+      <option name="closed" value="true" />
+      <created>1711539691535</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1711539691535</updated>
+    </task>
+    <task id="LOCAL-00025" summary="Adjusted node nomenclature, now tree name is added in front of the node inside of tree_generator">
+      <option name="closed" value="true" />
+      <created>1711540916515</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1711540916515</updated>
+    </task>
+    <task id="LOCAL-00026" summary="smaller_things_fixed">
+      <option name="closed" value="true" />
+      <created>1711567021717</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1711567021717</updated>
+    </task>
+    <task id="LOCAL-00027" summary="some changes in how optimization is ran">
+      <option name="closed" value="true" />
+      <created>1711632835535</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1711632835535</updated>
+    </task>
+    <task id="LOCAL-00028" summary="Issue with double matching sorted; second constraint had to have tupples reversed">
+      <option name="closed" value="true" />
+      <created>1711637297034</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1711637297034</updated>
+    </task>
+    <task id="LOCAL-00029" summary="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches.">
+      <option name="closed" value="true" />
+      <created>1712224978707</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1712224978707</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -164,11 +336,31 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
-    <MESSAGE value="Initial commit" />
     <MESSAGE value="Adding gitignore file" />
     <MESSAGE value="Issue sorted, code is now working. Problem was with path for second folder." />
     <MESSAGE value="Trying to call methods from dataset.py" />
     <MESSAGE value="Trying to call methods from dataset.py Managed to call function loadData" />
-    <option name="LAST_COMMIT_MESSAGE" value="Trying to call methods from dataset.py Managed to call function loadData" />
+    <MESSAGE value="Added methods for writing wkt and unionised wkt polygons to text files." />
+    <MESSAGE value="minor changes" />
+    <MESSAGE value="bug fixed, both files were writing original triangles from jar file" />
+    <MESSAGE value="Start of tree generator" />
+    <MESSAGE value="Added code" />
+    <MESSAGE value="Code working. Graph not yet created, will be added in the next iteration." />
+    <MESSAGE value="Code for drawing visualisation of a graph added" />
+    <MESSAGE value="Code changed so that storage with all polygons (old and new) contains only area surfaces for original polygons even for new parents" />
+    <MESSAGE value="Some adjustments added, new graph type tried" />
+    <MESSAGE value="With working tree graphs now" />
+    <MESSAGE value="Gurobi test, Jaccart index start code" />
+    <MESSAGE value="Some code updated" />
+    <MESSAGE value="Working Jaccard Index" />
+    <MESSAGE value="Code optimized (looks like), subtrees are populated with w=0 if there is no intersection between roots." />
+    <MESSAGE value="tree_generator is rewritten with classes" />
+    <MESSAGE value="Adjusted jaccardIndex to accept new treeGenerator class" />
+    <MESSAGE value="Adjusted node nomenclature, now tree name is added in front of the node inside of tree_generator" />
+    <MESSAGE value="smaller_things_fixed" />
+    <MESSAGE value="some changes in how optimization is ran" />
+    <MESSAGE value="Issue with double matching sorted; second constraint had to have tupples reversed" />
+    <MESSAGE value="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches." />
+    <option name="LAST_COMMIT_MESSAGE" value="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches." />
   </component>
 </project>
