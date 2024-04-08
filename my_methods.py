@@ -4,6 +4,7 @@ from tree_generator import treeGenerator, jaccardIndex
 from gurobipy import *
 import networkx as nx
 from tqdm import tqdm
+from rtree import index
 
 # Instantiate the Dataset class
 dataset1 = Dataset(name='auerberg_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/auerberg_atkis',epsilon=0)
@@ -67,13 +68,13 @@ obj_function = LinExpr([weighted_graph.edges[edge]['weight'] for edge in all_edg
 optimization_model.setObjective(obj_function, GRB.MAXIMIZE)
 
 # Set constraints for T1
-for path in tqdm(T1.leaf_list, desc=f"Setting constraints for {T1}"):
+for path in tqdm(T1.leaf_paths.values(), desc=f"Setting constraints for {T1}"):
     indexes = [edge_to_index[edge] for edge in weighted_graph.edges(path)]
     constraint_sum = LinExpr([1] * len(indexes), [x[i] for i in indexes])
     optimization_model.addConstr(constraint_sum <= 1)
 
 # Set constraints for T2
-for path in tqdm(T2.leaf_list, desc=f"Setting constraints for {T2}"):
+for path in tqdm(T2.leaf_paths.values(), desc=f"Setting constraints for {T2}"):
     indexes = [edge_to_index[edge[::-1]] for edge in weighted_graph.edges(path)]
     constraint_sum = LinExpr([1] * len(indexes), [x[i] for i in indexes])
     optimization_model.addConstr(constraint_sum <= 1)

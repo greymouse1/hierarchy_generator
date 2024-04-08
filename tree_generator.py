@@ -7,6 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 from tqdm import tqdm
+from rtree import index
+from bidict import bidict
 
 # whole function which builds tree with all nodes and surface areas
 # input wkb text file with all triangles, first line are original building polygons
@@ -18,8 +20,8 @@ class treeGenerator:
         self.tree_root = []
         self.tree_leaves = []
         self.G = nx.DiGraph()
-        # List which will store all unique shortest paths from root to each leaf
-        self.leaf_list = []
+        # Dictionary which will store all unique shortest paths from root to each leaf
+        self.leaf_paths = {}
         # Call method to run all calculations when instance of a class is initialized
         self.run_calculations()
         # Call method to calculate shortest paths to each leaf, this has to be done after run_calculations
@@ -169,7 +171,9 @@ class treeGenerator:
 
     def calculateLeafs(self):
         for i in range(len(self.tree_leaves)):
-            self.leaf_list.append(nx.shortest_path(self.G, source=self.tree_root[0], target=self.tree_leaves[i]))
+            leaf = self.tree_leaves[i]
+            shortest_path = nx.shortest_path(self.G, source=self.tree_root[0], target=leaf)
+            self.leaf_paths[leaf] = shortest_path
 
     def drawGraph(self):
         # Draw the graph, remove geometry because pydot gets error if geometry is used
@@ -226,62 +230,66 @@ def jaccardIndex(tree1,tree2):
     # as edges between trees are checked and Jaccard Index is calculated, resulting deges with JI are packed
     # into a new graph
 
-    # Edges to be added
+    # Edges to be added for the new graph
     edges_to_add = []
 
-    for node_id in tqdm(dfs_preorder_nodes_tree1,desc="Calculating Jaccard Index between nodes"):
-        #order nodes in dfs order
-        geometry1 = geometry1_shp[node_id] # pull geometry from current node from tree 1
-        node1 = node_id
-        #G.add_node(node1,bipartite=0)
+    # Create a bidirectional mapping between string ID and integer ID
+    string_to_integer_mapping = bidict()
 
-        stack = [tree2_root]
-        visited = set()
+    # Construct rtree index
+    tree2_index = index.Index()
+    for i,node in enumerate(tree2.tree_leaves):
+        string_to_integer_mapping[node] = i
 
-        while stack:
-            current_node = stack.pop()
-            node2 = current_node
-            #G.add_node(node2,bipartite=1)
-            visited.add(current_node)
-            geometry2 = geometry2_shp[current_node] # pull geometry from current node from tree 2
+        # Pull coordinates of the polygon for each node
+        polygon = tree2.G.nodes[node]["geometry"]
 
-            # First condition to be checked is if there is existing edge between node from T1 and T2
-            # If there is, it can only be 0 and in that case we disregard whole subtree for rooted at current
-            # node in T2, and proceed to the next available node
+        # Calculate bounding box of a node
+        bbox = polygon.bounds
 
-            #if G.has_edge(node1,node2):
-            #    print("edge 0 detected, avoid subtree rooted here, move to next node")
-            #    continue
+        # Add node with its ID and bounding box to the rtree index
+        tree2_index.insert(i,bbox)
+    used_nodes_tree1 = []
+    used_nodes_tree2 = []
+    for node_id in tree1.tree_leaves:
+        # Pull node geometry and ID
+        node1_geometry = geometry1_shp[node_id] # pull geometry from current node from tree 1
+        node1_id = node_id
 
-            # If there is no edge, code will continue with calculation of intersection as usual
+        # Create bbox for node1
+        node1_bbox = node1_geometry.bounds
 
-            # Try creating intersection
-            intersection = geometry1.intersection(geometry2).area
+        # Query the rtree index to find intersections
+        potential_intersections = list(tree2_index.intersection(node1_bbox))
 
-            # Check condition for the current node
-            # If intersection is 0 for the current pair, get subtrees rooted in them and populated all the edges with
-            # weight 0
-            if intersection == 0:
-                #print(f"Nodes {node1} and {node2} aren't intersecting")
-                #current_subtree_T1 = nx.dfs_preorder_nodes(tree1.G,node_id)
-                #current_subtree_T2 = nx.dfs_preorder_nodes(tree2.G,current_node)
-                ##G.add_edges_from([(node1, "T2_" + str(target_node), {'weight': 0}) for target_node in current_subtree])
-                #G.add_edges_from([(u,v, {'weight': 0}) for u in current_subtree_T1 for v in current_subtree_T2])
-                continue  # Skip subtree if condition not satisfied
+        if len(potential_intersections) > 0:
+            # Pull all nodes for leaf in T1
+            unique_nodes_t1 = tree1.leaf_paths[node1_id]
+            subtraction1 = set(unique_nodes_t1) - set(used_nodes_tree1)
+            unique_nodes_t1_cleaned = list(subtraction1)
+            used_nodes_tree1.extend(unique_nodes_t1_cleaned)
+            starting_set = set([])
+            for _ in potential_intersections:
+                node2_id = string_to_integer_mapping.inv[_]
+                # Since matching is done in a one-to-many manner
+                # the second set will have to be cleaned of redundant nodes
+                # since shortest paths for two or more nodes in T2 may overlap
+                starting_set = starting_set.union(set(tree2.leaf_paths[node2_id]))
+            subtraction2 = starting_set - set(used_nodes_tree2)
+            unique_nodes_t2_cleaned = list(subtraction2)
+            used_nodes_tree2.extend(unique_nodes_t2_cleaned)
 
-            # If intersection is != 0 then calculate weight
-            # create weight as Jaccard Index
-            union = geometry1.union(geometry2).area
-            jaccard_index = intersection / union
-            edges_to_add.append((node1,node2,jaccard_index))
-            #G.add_edge(node1,node2,weight=jaccard_index)
-
-            # Iterate through children and add them to stack
-            tree2_children = tree2_successors[current_node]
-            for child in tree2_children:
-                if child not in visited:
-                    stack.append(child)
-
+            for x in unique_nodes_t1_cleaned:
+                for y in unique_nodes_t2_cleaned:
+                    candidate1_geometry = geometry1_shp[x]
+                    candidate2_geometry = geometry2_shp[y]
+                    if candidate1_geometry.intersects(candidate2_geometry):
+                        intersection = candidate1_geometry.intersection(candidate2_geometry).area
+                        union = candidate1_geometry.union(candidate2_geometry).area
+                        jaccard_index = intersection / union
+                        edges_to_add.append((x, y, jaccard_index))
+        else:
+            continue
     # Adding whole list of weighted edges outside the loop
     G.add_weighted_edges_from(edges_to_add)
 
