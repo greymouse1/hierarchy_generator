@@ -70,7 +70,7 @@ class treeGenerator:
             #append starting polygons which are later on considered leaves
             self.tree_leaves.append(self.tree_name + "_" + str(node_id))
             # add node for current polygon
-            self.G.add_node(self.tree_name + "_" + str(node_id), geometry=geometry)
+            self.G.add_node(self.tree_name + "_" + str(node_id), geometry=geometry, leaves=[self.tree_name + "_" + str(node_id)])
 
         # add AREA to data frame
         # polygon_storage['AREA'] = polygon_storage['geometry'].area
@@ -126,7 +126,13 @@ class treeGenerator:
                 # log current node, once code comes to end, this will hold root
                 self.tree_root.append(self.tree_name + "_" + str(new_id))
                 # add new node for new merged polygon
-                self.G.add_node(self.tree_name + "_" + str(new_id), geometry=unary_union(filtered_polygons_geometries))
+                adjusted_id = self.tree_name + "_" + str(new_id)
+                # pack all leaves from child nodes into a list
+                leafs_list = []
+                for _ in intersecting_polygons_ids:
+                    leafs_list.extend(self.G.nodes[self.tree_name + "_" + str(_)]['leaves'])
+                self.G.add_node(adjusted_id, geometry=unary_union(filtered_polygons_geometries), leaves = leafs_list )
+
                 edges = []
                 for id in intersecting_polygons_ids:
                     new_edge = (self.tree_name + "_" + str(new_id),self.tree_name + "_" + str(id))
@@ -204,9 +210,16 @@ def jaccardIndex(tree1,tree2):
     print("Root 1",tree1_root)
     print("Root 2", tree2_root)
 
+    # Precomupte unions of leaf polygons for each node in T1 and T2
+
     # Precompute shapes and second tree successors for each node
-    geometry1_shp = {node_id: sg.shape(data['geometry']) for node_id, data in tree1.G.nodes(data=True)}
-    geometry2_shp = {node_id: sg.shape(data['geometry']) for node_id, data in tree2.G.nodes(data=True)}
+    geometry1_shp = {node_id: sg.shape(tree1.G.nodes[node_id]['geometry']) for node_id in tree1.tree_leaves}
+    geometry2_shp = {node_id: sg.shape(tree2.G.nodes[node_id]['geometry']) for node_id in tree2.tree_leaves}
+
+    # Precompute nodes and their leaves so graph isn't being accessed in the loop later
+    tree1_leaves = {node_id: list(tree1.G.nodes[node_id]['leaves']) for node_id in tree1.G.nodes()}
+    tree2_leaves = {node_id: list(tree2.G.nodes[node_id]['leaves']) for node_id in tree2.G.nodes()}
+
     tree2_successors = {node_id: list(tree2.G.successors(node_id)) for node_id in tree2.G.nodes()}
 
     # Compute nodes of first tree in advance
@@ -249,9 +262,10 @@ def jaccardIndex(tree1,tree2):
 
         # Add node with its ID and bounding box to the rtree index
         tree2_index.insert(i,bbox)
-    used_nodes_tree1 = []
-    used_nodes_tree2 = []
-    for node_id in tree1.tree_leaves:
+
+    processed_edges = set()
+    leaf_inst_union = {} # hold intersections and unions for each edge between leaves of two trees
+    for node_id in tqdm(tree1.tree_leaves, desc="Jaccard Index is being calculated"):
         # Pull node geometry and ID
         node1_geometry = geometry1_shp[node_id] # pull geometry from current node from tree 1
         node1_id = node_id
@@ -265,33 +279,44 @@ def jaccardIndex(tree1,tree2):
         if len(potential_intersections) > 0:
             # Pull all nodes for leaf in T1
             unique_nodes_t1 = tree1.leaf_paths[node1_id]
-            subtraction1 = set(unique_nodes_t1) - set(used_nodes_tree1)
-            unique_nodes_t1_cleaned = list(subtraction1)
-            used_nodes_tree1.extend(unique_nodes_t1_cleaned)
             starting_set = set([])
-            for _ in potential_intersections:
-                node2_id = string_to_integer_mapping.inv[_]
-                # Since matching is done in a one-to-many manner
-                # the second set will have to be cleaned of redundant nodes
-                # since shortest paths for two or more nodes in T2 may overlap
-                starting_set = starting_set.union(set(tree2.leaf_paths[node2_id]))
-            subtraction2 = starting_set - set(used_nodes_tree2)
-            unique_nodes_t2_cleaned = list(subtraction2)
-            used_nodes_tree2.extend(unique_nodes_t2_cleaned)
+            # if there is really intersection between leafs, add them to the dictionaryu
+            for i in potential_intersections:
+                node2_id = string_to_integer_mapping.inv[i]
+                if geometry1_shp[node_id].intersects(geometry2_shp[node2_id]):
+                    intersection = geometry1_shp[node_id].intersection(geometry2_shp[node2_id]).area
+                    union = geometry1_shp[node_id].union(geometry2_shp[node2_id]).area
+                    leaf_inst_union[node_id+"-"+node2_id] = (intersection,union)
+                    # Since matching is done in a one-to-many manner
+                    # the second set will have to be cleaned of redundant nodes
+                    # since shortest paths for two or more nodes in T2 may overlap
+                    starting_set = starting_set.union(set(tree2.leaf_paths[node2_id]))
 
-            for x in unique_nodes_t1_cleaned:
-                for y in unique_nodes_t2_cleaned:
-                    candidate1_geometry = geometry1_shp[x]
-                    candidate2_geometry = geometry2_shp[y]
-                    if candidate1_geometry.intersects(candidate2_geometry):
-                        intersection = candidate1_geometry.intersection(candidate2_geometry).area
-                        union = candidate1_geometry.union(candidate2_geometry).area
-                        jaccard_index = intersection / union
-                        edges_to_add.append((x, y, jaccard_index))
+            for x in unique_nodes_t1:
+                for y in list(starting_set):
+                    # Concatenate x and y to form a unique edge identifier
+                    edge_id = f"{x}-{y}"
+                    if edge_id in processed_edges:
+                        continue
+                    edges_to_add.append((x, y,"0"))
+                    # Mark the edge as processed
+                    processed_edges.add(edge_id)
         else:
             continue
     # Adding whole list of weighted edges outside the loop
     G.add_weighted_edges_from(edges_to_add)
+    for u,v in tqdm(G.edges):
+        leaves_in_t1 = tree1_leaves[u]
+        leaves_in_t2 = tree2_leaves[v]
+        sum_int = 0
+        sum_uni = 0
+        for l1 in leaves_in_t1:
+            for l2 in leaves_in_t2:
+                edge = l1 + "-" + l2
+                if edge in leaf_inst_union.keys():
+                    sum_int = sum_int + leaf_inst_union[edge][0]
+        ji = sum_int/(tree1.G.nodes[u]['geometry'].union(tree2.G.nodes[v]['geometry'])).area
+        G[u][v]['weight'] = ji
 
     # Code for plotting which is not really necessary
     #for u, v, data in G.edges(data=True):
