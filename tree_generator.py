@@ -213,8 +213,8 @@ def jaccardIndex(tree1,tree2):
     # Precomupte unions of leaf polygons for each node in T1 and T2
 
     # Precompute shapes and second tree successors for each node
-    geometry1_shp = {node_id: sg.shape(tree1.G.nodes[node_id]['geometry']) for node_id in tree1.tree_leaves}
-    geometry2_shp = {node_id: sg.shape(tree2.G.nodes[node_id]['geometry']) for node_id in tree2.tree_leaves}
+    geometry1_shp = {node_id: sg.shape(tree1.G.nodes[node_id]['geometry']) for node_id in tree1.G.nodes}
+    geometry2_shp = {node_id: sg.shape(tree2.G.nodes[node_id]['geometry']) for node_id in tree2.G.nodes}
 
     # Precompute nodes and their leaves so graph isn't being accessed in the loop later
     tree1_leaves = {node_id: list(tree1.G.nodes[node_id]['leaves']) for node_id in tree1.G.nodes()}
@@ -315,7 +315,7 @@ def jaccardIndex(tree1,tree2):
                 edge = l1 + "-" + l2
                 if edge in leaf_inst_union.keys():
                     sum_int = sum_int + leaf_inst_union[edge][0]
-        ji = sum_int/(tree1.G.nodes[u]['geometry'].union(tree2.G.nodes[v]['geometry'])).area
+        ji = sum_int/(geometry1_shp[u].union(geometry2_shp[v]).area)
         G[u][v]['weight'] = ji
 
     # Code for plotting which is not really necessary
