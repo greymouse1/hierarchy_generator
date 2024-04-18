@@ -53,11 +53,17 @@ def optimization(weighted_graph,T1,T2):
     # Dictionary holding edge ID and value of decision variable
     matched_edges = {}
 
+    # Dictionary holding edges of value 0
+    zero_edges = {}
+
     for v in optimization_model.getVars():
         if v.x > 0:
-            print( '%s: %g ' % (v.varName,v.x))
+            #print( '%s: %g ' % (v.varName,v.x))
             matched_edge_id = (int(v.varName.split('[')[1].split(']')[0]))
             matched_edges[all_edges[matched_edge_id]] = v.x
+        elif v.x == 0:
+            matched_edge_id = (int(v.varName.split('[')[1].split(']')[0]))
+            zero_edges[all_edges[matched_edge_id]] = v.x
         else:
             is_set_empty = False
 
@@ -73,16 +79,70 @@ def optimization(weighted_graph,T1,T2):
         else:
             return 1
 
-    for first,second in matched_edges:
-        m = number_of_leaf_nodes(T1.G,first)
-        n = number_of_leaf_nodes(T2.G,second)
-        print(f"Edge {first}:{second} is a {m}:{n} match")
+    # This part is printing m:n matches
+    #for first,second in matched_edges:
+        #m = number_of_leaf_nodes(T1.G,first)
+        #n = number_of_leaf_nodes(T2.G,second)
+        #print(f"Edge {first}:{second} is a {m}:{n} match")
 
-    return matched_edges,is_set_empty
+    return zero_edges, matched_edges, is_set_empty
 
-# Solve linear program
-x = optimization(weighted_graph,T1,T2)
+# Matching algorithm
+def matching(weighted_graph, T1, T2):
+    zero_edges, matched_edges, is_set_empty = optimization(weighted_graph,T1,T2)
 
-# Check for condition F0 ={e is element of F or xe = 0}
+    all_edges = zero_edges.copy()  # Create a copy of dict1
+    all_edges.update(matched_edges)
+
+    if not is_set_empty:
+        reduced_graph = weighted_graph.copy()
+        reduced_graph.remove_edges_from(zero_edges.keys())
+        m = matching(reduced_graph, T1, T2)
+        return m
+    # Check for sum of decision variable values for edges which are incident to
+    # nodes which belong to paths to which edges node of current edge belong to
+    for edge in weighted_graph.edges():
+        print(edge)
+        # For T1
+        nodes_in_T1 = []
+        node_in_T1 = edge[0]
+        ancestors_T1 = nx.ancestors(T1.G,node_in_T1)
+        descendants_in_T1 = nx.descendants(T1.G,node_in_T1)
+        nodes_in_T1.extend(ancestors_T1)
+        nodes_in_T1.extend(descendants_in_T1)
+        # For T2
+        nodes_in_T2 = []
+        node_in_T2 = edge[1]
+        ancestors_T2 = nx.ancestors(T2.G, node_in_T2)
+        descendants_in_T2 = nx.descendants(T2.G, node_in_T2)
+        nodes_in_T2.extend(ancestors_T2)
+        nodes_in_T2.extend(descendants_in_T2)
+        # Holders for sum and detected edges
+        total_sum = 0
+        detected_edges= []
+        for start_node in nodes_in_T1:
+            for end_node in nodes_in_T2:
+                if (start_node,end_node) in all_edges:
+                    total_sum = total_sum + all_edges[(start_node,end_node)]
+                    detected_edges.append((start_node,end_node))
+        if total_sum <= 3: # This is value alpha = 0
+            shifted_graph = weighted_graph.copy()
+            weight_of_current_edge = weighted_graph.edges[edge]['weight']
+            for detected_edge in detected_edges:
+                weight_of_detected_edge = weighted_graph.edges[detected_edge]['weight']
+                new_weight = weight_of_detected_edge - weight_of_current_edge
+                nx.set_edge_attributes(shifted_graph, {detected_edge: new_weight}, 'weight')
+            m = matching(shifted_graph, T1, T2)
+            if not set(detected_edges).intersection(m):
+                m = m.extend(edge)
+            return m
+        else:
+            m = matching(weighted_graph, T1, T2)
+            return m
 
 
+
+
+final_result = matching(weighted_graph,T1,T2)
+
+print(final_result)
