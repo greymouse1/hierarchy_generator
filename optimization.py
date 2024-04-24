@@ -50,10 +50,10 @@ def optimization(weighted_graph,T1,T2):
 
     is_set_empty = True
 
-    # Dictionary holding edge ID and value of decision variable
+    # Dictionary holding edge ID and value of decision variable for cases where x > 0
     matched_edges = {}
 
-    # Dictionary holding edges of value 0
+    # Dictionary holding edges with decision variable value 0
     zero_edges = {}
 
     for v in optimization_model.getVars():
@@ -64,8 +64,7 @@ def optimization(weighted_graph,T1,T2):
         elif v.x == 0:
             matched_edge_id = (int(v.varName.split('[')[1].split(']')[0]))
             zero_edges[all_edges[matched_edge_id]] = v.x
-        else:
-            is_set_empty = False
+
 
     # Define function for calculating number of leafs
     def number_of_leaf_nodes(tree, node):
@@ -85,24 +84,27 @@ def optimization(weighted_graph,T1,T2):
         #n = number_of_leaf_nodes(T2.G,second)
         #print(f"Edge {first}:{second} is a {m}:{n} match")
 
-    return zero_edges, matched_edges, is_set_empty
+    return zero_edges, matched_edges
 
 # Matching algorithm
 def matching(weighted_graph, T1, T2):
-    zero_edges, matched_edges, is_set_empty = optimization(weighted_graph,T1,T2)
+    zero_edges, matched_edges = optimization(weighted_graph,T1,T2)
+    print("Number of zero edges is", len(zero_edges))
+    print("Number of matched edges is", len(matched_edges))
 
     all_edges = zero_edges.copy()  # Create a copy of dict1
     all_edges.update(matched_edges)
-
-    if not is_set_empty:
+    if zero_edges:
         reduced_graph = weighted_graph.copy()
         reduced_graph.remove_edges_from(zero_edges.keys())
+        print("Number of edges in input graph is", weighted_graph.number_of_edges())
+        print("Number of edges in reduced graph is", reduced_graph.number_of_edges())
         m = matching(reduced_graph, T1, T2)
         return m
     # Check for sum of decision variable values for edges which are incident to
     # nodes which belong to paths to which edges node of current edge belong to
     for edge in weighted_graph.edges():
-        print(edge)
+        print("Current edge in the weighted graph is ",edge)
         # For T1
         nodes_in_T1 = []
         node_in_T1 = edge[0]
@@ -117,28 +119,37 @@ def matching(weighted_graph, T1, T2):
         descendants_in_T2 = nx.descendants(T2.G, node_in_T2)
         nodes_in_T2.extend(ancestors_T2)
         nodes_in_T2.extend(descendants_in_T2)
-        # Holders for sum and detected edges
+        # Holders for sum (of decision variable x values)
         total_sum = 0
+        # Detected edges are edges which are found to be in conflict with current edge, and they
+        # belong to the latest solution ie they have some value for decision variable x
         detected_edges= []
         for start_node in nodes_in_T1:
             for end_node in nodes_in_T2:
                 if (start_node,end_node) in all_edges:
                     total_sum = total_sum + all_edges[(start_node,end_node)]
                     detected_edges.append((start_node,end_node))
-        if total_sum <= 3: # This is value alpha = 0
+        if not detected_edges:
+            continue
+        if total_sum <= 3: # This is value alpha = 3
             shifted_graph = weighted_graph.copy()
             weight_of_current_edge = weighted_graph.edges[edge]['weight']
             for detected_edge in detected_edges:
                 weight_of_detected_edge = weighted_graph.edges[detected_edge]['weight']
                 new_weight = weight_of_detected_edge - weight_of_current_edge
                 nx.set_edge_attributes(shifted_graph, {detected_edge: new_weight}, 'weight')
+            print(f"Edges in conflict with edge {edge} are edges: {detected_edges}")
+            print("Total sum is ", total_sum)
             m = matching(shifted_graph, T1, T2)
             if not set(detected_edges).intersection(m):
-                m = m.extend(edge)
+                if edge not in m:
+                    print(f"Extending M with edge {edge}")
+                    m.append(edge)
             return m
-        else:
-            m = matching(weighted_graph, T1, T2)
-            return m
+
+    #m = matching(weighted_graph, T1, T2)
+    print("Final matching line reached, returning empty list")
+    return []
 
 
 
@@ -146,3 +157,4 @@ def matching(weighted_graph, T1, T2):
 final_result = matching(weighted_graph,T1,T2)
 
 print(final_result)
+print("Number of matches is ",len(final_result))
