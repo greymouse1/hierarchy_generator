@@ -13,7 +13,8 @@ with open("T1.pkl", "rb") as f:
 with open("T2.pkl", "rb") as f:
     T2 = pickle.load(f)
 
-def optimization(weighted_graph,T1,T2):
+# Select whether you use ILP or LP. For ILP input GRB.INTEGER, for LP input GRB.CONTINUOUS
+def optimization(weighted_graph,T1,T2,program_type):
     # Run Gurobi optimization
 
     # Get the set of all edges
@@ -27,7 +28,7 @@ def optimization(weighted_graph,T1,T2):
     # Add decision variables x.
     # If ILP, then vtype=GRB.BINARY and no lb,ub
     # IF LP, then vtype=GRB.CONTINUOUS and lb=0,ub=1
-    x = optimization_model.addVars(len(all_edges), vtype=GRB.CONTINUOUS ,lb=0, ub=1, name="x")
+    x = optimization_model.addVars(len(all_edges), vtype=program_type ,lb=0, ub=1, name="x")
 
     # Define objective function
     obj_function = LinExpr([weighted_graph.edges[edge]['weight'] for edge in all_edges], x.values())
@@ -88,7 +89,7 @@ def optimization(weighted_graph,T1,T2):
 
 # Matching algorithm
 def matching(weighted_graph, T1, T2):
-    zero_edges, matched_edges = optimization(weighted_graph,T1,T2)
+    zero_edges, matched_edges = optimization(weighted_graph,T1,T2, GRB.CONTINUOUS)
     print("Number of zero edges is", len(zero_edges))
     print("Number of matched edges is", len(matched_edges))
 
@@ -153,8 +154,38 @@ def matching(weighted_graph, T1, T2):
 
 
 
+# Function for manually calculating value of objetive function from Canzar output
+def objFunctVal(inputGraph,resultingEdges):
+    for (u,v) in resultingEdges:
+        weight= inputGraph[u][v]['weight']
+        print(weight)
+    objFunct = sum([inputGraph[u][v]['weight'] for (u,v) in resultingEdges])
+    return objFunct
 
-final_result = matching(weighted_graph,T1,T2)
+# Run Canzar
+#final_result_canzar = matching(weighted_graph,T1,T2)
+#print(final_result_canzar)
+#print("Number of matches is ",len(final_result_canzar))
+#print("Value of objective function is ", objFunctVal(weighted_graph,final_result_canzar))
 
-print(final_result)
-print("Number of matches is ",len(final_result))
+# Run ILP
+final_result_ilp = optimization(weighted_graph,T1,T2,GRB.INTEGER)
+print(final_result_ilp[1])
+print("Number of matches is ", len(final_result_ilp[1]))
+
+# Get a list of all matched nodes from T1
+matched_nodes_T1 = []
+matched_nodes_T2 = []
+
+for edge in final_result_ilp[1].keys():
+    u = edge[0]
+    v = edge[1]
+    matched_nodes_T1.append(u)
+    matched_nodes_T2.append(v)
+
+
+# Get a list of all matched nodes from T2
+T1.saveShpGrouped(matched_nodes_T1)
+T2.saveShpGrouped(matched_nodes_T2)
+
+

@@ -13,10 +13,17 @@ from tqdm import tqdm
 #def treeGenerator(wkb_text_file,tree_name):
 class treeGenerator:
     def __init__(self,arg1,arg2):
+        # Wkb text file
         self.wkb_text_file = arg1
+        # Tree name
         self.tree_name = arg2
+        # Tree root node
         self.tree_root = []
+        # Tree leaves nodes
         self.tree_leaves = []
+        # Declare empty variable which will later hold a gdf with all nodes and their geometries
+        self.polygon_storage = None
+        # Initialise directional graph
         self.G = nx.DiGraph()
         # List which will store all unique shortest paths from root to each leaf
         self.leaf_list = []
@@ -57,11 +64,11 @@ class treeGenerator:
 
         # create storage which will hold all polygons, old and new parent ones with their
         # respective IDs and surface areas
-        polygon_storage = polygons_gdf.copy()
+        self.polygon_storage = polygons_gdf.copy()
 
         # add starting nodes
         # iterate over rows of the polygon_storage
-        for index, row in polygon_storage.iterrows():
+        for index, row in self.polygon_storage.iterrows():
             # get Id and geometry
             node_id = row['ID']
             geometry = row['geometry']
@@ -71,7 +78,7 @@ class treeGenerator:
             self.G.add_node(self.tree_name + "_" + str(node_id), geometry=geometry)
 
         # add AREA to data frame
-        # polygon_storage['AREA'] = polygon_storage['geometry'].area
+        # self.polygon_storage['AREA'] = self.polygon_storage['geometry'].area
 
         # since first line had initial polygons, and triangles are starting from the second line
         # loop will iterate from second line to the end
@@ -114,11 +121,11 @@ class treeGenerator:
                 # even when "merged" poligon is considered it will still have area of only
                 # original polygons without the triangles
                 # new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
-                last_id = polygon_storage.iloc[-1]['ID']
+                last_id = self.polygon_storage.iloc[-1]['ID']
                 new_id = last_id + 1
                 new_entry = {'ID': new_id, 'geometry': unary_union(filtered_polygons_geometries)}
                 new_entry_gdf = gpd.GeoDataFrame([new_entry], geometry='geometry')
-                polygon_storage = pd.concat([polygon_storage,new_entry_gdf], ignore_index=True)
+                self.polygon_storage = pd.concat([self.polygon_storage,new_entry_gdf], ignore_index=True)
                 #print("success")
 
                 # log current node, once code comes to end, this will hold root
@@ -165,7 +172,7 @@ class treeGenerator:
             # Remove IDs from tree_leaves list
             self.tree_leaves = [leaf for leaf in self.tree_leaves if leaf not in modified_ids]
 
-        # polygon_storage.to_file("tree_polygons.shp") this is not needed right now
+        # self.polygon_storage.to_file("tree_polygons.shp") this is not needed right now
 
     def calculateLeafs(self):
         for i in range(len(self.tree_leaves)):
@@ -188,6 +195,28 @@ class treeGenerator:
         p = nx.drawing.nx_pydot.to_pydot(G_without_area)
         p.write_png(f'{self.tree_name}_topography.png')
 
+    # This function is called later on when matching process was done. Input into this is list of nodes
+    # which have been matched. Function will pull leafs of all these nodes, group leaf polygons, unionise
+    # them and create a buffer. This buffer is saved into .shp file. Such layer can be overlaid with starting
+    # .wkt files so grouping can be visualized efficiently
+    def saveShpGrouped(self, nodeList):
+        # initialise new GeoDataframe
+        new_gdf = gpd.GeoDataFrame()
+
+        for node in nodeList:
+            # Since original IDs are only numbers, and IDs from matches have tree name preceding the number,
+            # I have to remove the tree name
+            node_id_trimmed = int(node.split("_")[1])
+            my_geometry = self.polygon_storage.loc[self.polygon_storage['ID'] == node_id_trimmed, 'geometry'].convex_hull.buffer(5)
+            new_geometry = {'ID': node, 'geometry': my_geometry}
+            new_geometry_gdf = gpd.GeoDataFrame(new_geometry, geometry = 'geometry')
+            new_gdf = pd.concat([new_gdf,new_geometry_gdf], ignore_index = True)
+
+        if not new_gdf.empty:
+            new_gdf.to_file(f"{self.tree_name}_matched_nodes.shp")
+            print(f"New GeoDataFrame for {self.tree_name} matched edges was saved successfully.")
+        else:
+            print("No geometries found for nodes ")
 def jaccardIndex(tree1,tree2):
 
     # create new empty graph

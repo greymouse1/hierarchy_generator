@@ -8,6 +8,10 @@ import networkx as nx
 dataset1 = Dataset(name='auerberg_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/auerberg_atkis',epsilon=0)
 dataset2 = Dataset(name='auerberg_osm',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/auerberg_osm',epsilon=0)
 
+# Small test dataset
+#dataset1 = Dataset(name='beuel-ost_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/beuel-ost_atkis',epsilon=0)
+#dataset2 = Dataset(name='beuel-ost_osm',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/beuel-ost_osm',epsilon=0)
+
 # Load data with eps=0
 dataset1.loadData(0)
 dataset2.loadData(0)
