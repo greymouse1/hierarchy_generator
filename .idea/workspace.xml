@@ -5,17 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6a227628-013f-42b3-9b77-70e675bcf354" name="Changes" comment="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches.">
-      <change afterPath="$PROJECT_DIR$/output.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/T1.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/T2.pkl" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/jaccard_index.graphml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/pythonProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pythonProject.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gurobitest.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.dbf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.prj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.shp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/testing/data/ahrem/ahrem.shx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/my_methods.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_methods.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization.py" beforeDir="false" afterPath="$PROJECT_DIR$/optimization.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runAllDatasets.py" beforeDir="false" afterPath="$PROJECT_DIR$/runAllDatasets.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +21,11 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -63,11 +66,12 @@
     &quot;Python.gurobitest.executor&quot;: &quot;Run&quot;,
     &quot;Python.ji.executor&quot;: &quot;Run&quot;,
     &quot;Python.my_methods.executor&quot;: &quot;Run&quot;,
+    &quot;Python.optimization.executor&quot;: &quot;Run&quot;,
     &quot;Python.runAllDatasets.executor&quot;: &quot;Run&quot;,
     &quot;Python.tree_generator.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;canzar&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder.nosync/pythonProject&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PythonContentEntriesConfigurable&quot;
   }

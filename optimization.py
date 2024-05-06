@@ -28,7 +28,7 @@ def optimization(weighted_graph,T1,T2,program_type):
     # Add decision variables x.
     # If ILP, then vtype=GRB.BINARY and no lb,ub
     # IF LP, then vtype=GRB.CONTINUOUS and lb=0,ub=1
-    x = optimization_model.addVars(len(all_edges), vtype=program_type ,lb=0, ub=1, name="x")
+    x = optimization_model.addVars(len(all_edges), vtype=program_type ,lb=0, ub=0.9, name="x")
 
     # Define objective function
     obj_function = LinExpr([weighted_graph.edges[edge]['weight'] for edge in all_edges], x.values())
@@ -87,8 +87,15 @@ def optimization(weighted_graph,T1,T2,program_type):
 
     return zero_edges, matched_edges
 
-# Matching algorithm
-def matching(weighted_graph, T1, T2):
+# Canzar's Matching algorithm
+def matching(weighted_graph, T1, T2, lambda_ = 0):
+
+    # Lambda is optional argument and a constant which is subtracted from weights
+    # in order to try to impact behaviour of linear program
+    if lambda_ != 0:
+        for u, v, data in weighted_graph.edges(data=True):
+            data['weight'] -= lambda_
+        print(f"All edges in initial graph have subtracted lambda value {lambda_}.")
     zero_edges, matched_edges = optimization(weighted_graph,T1,T2, GRB.CONTINUOUS)
     print("Number of zero edges is", len(zero_edges))
     print("Number of matched edges is", len(matched_edges))
@@ -140,7 +147,7 @@ def matching(weighted_graph, T1, T2):
                 new_weight = weight_of_detected_edge - weight_of_current_edge
                 nx.set_edge_attributes(shifted_graph, {detected_edge: new_weight}, 'weight')
             print(f"Edges in conflict with edge {edge} are edges: {detected_edges}")
-            print("Total sum is ", total_sum)
+            print("Decision variables sum for conflicting edges is ", total_sum)
             m = matching(shifted_graph, T1, T2)
             if not set(detected_edges).intersection(m):
                 if edge not in m:
@@ -163,21 +170,24 @@ def objFunctVal(inputGraph,resultingEdges):
     return objFunct
 
 # Run Canzar
-#final_result_canzar = matching(weighted_graph,T1,T2)
-#print(final_result_canzar)
-#print("Number of matches is ",len(final_result_canzar))
-#print("Value of objective function is ", objFunctVal(weighted_graph,final_result_canzar))
+# Arguments are graph, tree 1, tree 2 and lambda (optional, default is 0)
+final_result_canzar = matching(weighted_graph,T1,T2)
+print(final_result_canzar)
+print("Number of matches is ",len(final_result_canzar))
+print("Value of objective function is ", objFunctVal(weighted_graph,final_result_canzar))
 
 # Run ILP
-final_result_ilp = optimization(weighted_graph,T1,T2,GRB.INTEGER)
-print(final_result_ilp[1])
-print("Number of matches is ", len(final_result_ilp[1]))
+#final_result_ilp = optimization(weighted_graph,T1,T2,GRB.INTEGER)
+#print(final_result_ilp[1])
+#print("Number of matches is ", len(final_result_ilp[1]))
 
-# Get a list of all matched nodes from T1
+# Get a list of all matched nodes from T1 and T2
 matched_nodes_T1 = []
 matched_nodes_T2 = []
 
-for edge in final_result_ilp[1].keys():
+# If using final_result_canzar, loop through final_result_canzar list, each item is a tupple with edge (two nodes)
+# If using final_result_ilp, loop through final_result_canzar[1].keys():
+for edge in final_result_canzar:
     u = edge[0]
     v = edge[1]
     matched_nodes_T1.append(u)

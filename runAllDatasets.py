@@ -27,9 +27,9 @@ if __name__ == '__main__':
     #args2 = parser.parse_args()
 
     #set path to the directory that includes the subfolder 'data'
-    path_string = "/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/testing/"
+    path_string = "/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/testing/"
     #set path including the subfolder data (this is for collecting all datasets)
-    path = "/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/testing/data"
+    path = "/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/testing/data"
     method = "tri"
     folder = method
     args = TempArgs(epsilon=0.01, path=folder + "/{}{}")
