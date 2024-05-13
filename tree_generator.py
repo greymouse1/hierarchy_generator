@@ -49,6 +49,37 @@ class treeGenerator:
                 polygons.append(polygon_coords)
             return polygons
 
+        # Grouping function takes current wkb MULTIPOLYGON line and checks if there are disjoint groups of polygons
+        # inside. In case there is only one group of polygons, it outputs list with one nested list of polygons
+        # If there are multiple groups, it outputs a list with nested lists, each nested list for one group of polygons
+        def grouping_function(wkt_line):
+            # Initialize empty list which will store groups
+            groups = []
+
+            for current_polygon in wkt_line.geoms:
+                # Flag to indicate if the polygon is grouped
+                grouped = False
+
+                # If there are no existing groups, create a new group for each polygon
+                if not groups:
+                    groups.append([current_polygon])
+                    continue  # Move to the next polygon
+
+                # Iterate over existing groups
+                for group in groups:
+                    # Check if the polygon touches any polygon in the group
+                    if any(current_polygon.touches(poly) for poly in group):
+                        # Add the polygon to the group
+                        group.append(current_polygon)
+                        grouped = True
+                        break
+
+                # If the polygon is not grouped, create a new group
+                if not grouped:
+                    groups.append([current_polygon])
+
+            return groups
+
         initial_polygons = polygon_parser(self.wkb_text_file[0])
 
         # store list of polygon coordinates
@@ -86,69 +117,71 @@ class treeGenerator:
 
             # get coordinates for all triangles in current line
             # now perform unary union of these triangles if there is more than one triangle
-            all_triangles = [Polygon(poly) for poly in polygon_parser(line)]
-            all_triangles = unary_union(all_triangles)
+            #all_triangles = [Polygon(poly) for poly in polygon_parser(line)]
+            list_of_nested_groups = grouping_function(line)
+            for group in list_of_nested_groups:
+                all_triangles = unary_union(group)
 
-            # check if coordinates of this triangle/polygon are shared with
-            # some of the polygons
-            intersecting_polygons_ids = []
-            for index, row in polygons_gdf.iterrows():
-                polygon_id = row['ID']
-                polygon_geometry = row['geometry']
-                if all_triangles.intersects(polygon_geometry):
-                    intersecting_polygons_ids.append(polygon_id)
+                # check if coordinates of this triangle/polygon are shared with
+                # some of the polygons
+                intersecting_polygons_ids = []
+                for index, row in polygons_gdf.iterrows():
+                    polygon_id = row['ID']
+                    polygon_geometry = row['geometry']
+                    if all_triangles.intersects(polygon_geometry):
+                        intersecting_polygons_ids.append(polygon_id)
 
-            #if intersecting_polygons_ids:
-                #print("Polygons from the second group that intersect with the polygon in the first group:")
-                #print(intersecting_polygons_ids)
-            #else:
-                #print("No polygon from the second group intersects with the polygon in the first group")
+                #if intersecting_polygons_ids:
+                    #print("Polygons from the second group that intersect with the polygon in the first group:")
+                    #print(intersecting_polygons_ids)
+                #else:
+                    #print("No polygon from the second group intersects with the polygon in the first group")
 
-            if len(intersecting_polygons_ids) > 1:
-                # Clear root holder since new parent is detected
-                self.tree_root.clear()
-                # Create a boolean mask to filter rows with IDs present in the list
-                mask = polygons_gdf['ID'].isin(intersecting_polygons_ids)
-                filtered_polygons = polygons_gdf[mask]
-                # Now extract geometries into a list
-                filtered_polygons_geometries = filtered_polygons['geometry'].tolist()
-                triangles_and_polygons = unary_union([all_triangles, unary_union(filtered_polygons_geometries)])
-                #print("Triangles and polygons union")
-                #print(triangles_and_polygons)
-                # now storage with original polygons needs to be updated for changes
-                # concatenate the IDs from the list, this storage keeps original polygons
-                # no triangles are merged here, just original polygons go in this storage
-                # even when "merged" poligon is considered it will still have area of only
-                # original polygons without the triangles
-                # new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
-                last_id = self.polygon_storage.iloc[-1]['ID']
-                new_id = last_id + 1
-                new_entry = {'ID': new_id, 'geometry': unary_union(filtered_polygons_geometries)}
-                new_entry_gdf = gpd.GeoDataFrame([new_entry], geometry='geometry')
-                self.polygon_storage = pd.concat([self.polygon_storage,new_entry_gdf], ignore_index=True)
-                #print("success")
+                if len(intersecting_polygons_ids) > 1:
+                    # Clear root holder since new parent is detected
+                    self.tree_root.clear()
+                    # Create a boolean mask to filter rows with IDs present in the list
+                    mask = polygons_gdf['ID'].isin(intersecting_polygons_ids)
+                    filtered_polygons = polygons_gdf[mask]
+                    # Now extract geometries into a list
+                    filtered_polygons_geometries = filtered_polygons['geometry'].tolist()
+                    triangles_and_polygons = unary_union([all_triangles, unary_union(filtered_polygons_geometries)])
+                    #print("Triangles and polygons union")
+                    #print(triangles_and_polygons)
+                    # now storage with original polygons needs to be updated for changes
+                    # concatenate the IDs from the list, this storage keeps original polygons
+                    # no triangles are merged here, just original polygons go in this storage
+                    # even when "merged" poligon is considered it will still have area of only
+                    # original polygons without the triangles
+                    # new_id = '_'.join(str(id_) for id_ in intersecting_polygons_ids)
+                    last_id = self.polygon_storage.iloc[-1]['ID']
+                    new_id = last_id + 1
+                    new_entry = {'ID': new_id, 'geometry': unary_union(filtered_polygons_geometries)}
+                    new_entry_gdf = gpd.GeoDataFrame([new_entry], geometry='geometry')
+                    self.polygon_storage = pd.concat([self.polygon_storage,new_entry_gdf], ignore_index=True)
+                    #print("success")
 
-                # log current node, once code comes to end, this will hold root
-                self.tree_root.append(self.tree_name + "_" + str(new_id))
-                # add new node for new merged polygon
-                self.G.add_node(self.tree_name + "_" + str(new_id), geometry=unary_union(filtered_polygons_geometries))
-                edges = []
-                for id in intersecting_polygons_ids:
-                    new_edge = (self.tree_name + "_" + str(new_id),self.tree_name + "_" + str(id))
-                    edges.append(new_edge)
-                self.G.add_edges_from(edges)
-                # now we update the starting storage since this one is used for checking all new triangles
-                # it will have old polygons deleted and new ones added
-                polygons_gdf = pd.concat([polygons_gdf,new_entry_gdf], ignore_index=True)
+                    # log current node, once code comes to end, this will hold root
+                    self.tree_root.append(self.tree_name + "_" + str(new_id))
+                    # add new node for new merged polygon
+                    self.G.add_node(self.tree_name + "_" + str(new_id), geometry=unary_union(filtered_polygons_geometries))
+                    edges = []
+                    for id in intersecting_polygons_ids:
+                        new_edge = (self.tree_name + "_" + str(new_id),self.tree_name + "_" + str(id))
+                        edges.append(new_edge)
+                    self.G.add_edges_from(edges)
+                    # now we update the starting storage since this one is used for checking all new triangles
+                    # it will have old polygons deleted and new ones added
+                    polygons_gdf = pd.concat([polygons_gdf,new_entry_gdf], ignore_index=True)
 
-                # now use mask created before and invert it with tilde so all entries except the ones in the mask will be kept
-                inverted_mask = ~polygons_gdf['ID'].isin(intersecting_polygons_ids)
+                    # now use mask created before and invert it with tilde so all entries except the ones in the mask will be kept
+                    inverted_mask = ~polygons_gdf['ID'].isin(intersecting_polygons_ids)
 
-                # filter the GeoDataFrame using the boolean mask to remove rows with specified IDs
-                polygons_gdf = polygons_gdf[inverted_mask]
+                    # filter the GeoDataFrame using the boolean mask to remove rows with specified IDs
+                    polygons_gdf = polygons_gdf[inverted_mask]
 
-            else:
-                next
+                else:
+                    next
         # This logic will check if polygons_gdf contains more than one element
         # If everything is correct, it will contain only one element and that is the root
         # If however there are more than one elements, that means we have some polygons which are
@@ -187,9 +220,9 @@ class treeGenerator:
         G_without_area.add_edges_from(self.G.edges)
 
         # pydot graph, fixed
-        pos = nx.nx_pydot.graphviz_layout(G_without_area, prog='dot')
-        nx.draw(G_without_area, pos, with_labels=True, node_size=200, node_color='skyblue', font_size=12, font_weight='bold')
-        plt.show()
+        #pos = nx.nx_pydot.graphviz_layout(G_without_area, prog='dot')
+        #nx.draw(G_without_area, pos, with_labels=True, node_size=200, node_color='skyblue', font_size=12, font_weight='bold')
+        #plt.show()
 
         # below works well, plots tree into png
         p = nx.drawing.nx_pydot.to_pydot(G_without_area)

@@ -28,7 +28,7 @@ def optimization(weighted_graph,T1,T2,program_type):
     # Add decision variables x.
     # If ILP, then vtype=GRB.BINARY and no lb,ub
     # IF LP, then vtype=GRB.CONTINUOUS and lb=0,ub=1
-    x = optimization_model.addVars(len(all_edges), vtype=program_type ,lb=0, ub=0.9, name="x")
+    x = optimization_model.addVars(len(all_edges), vtype=program_type ,lb=0, ub=1, name="x")
 
     # Define objective function
     obj_function = LinExpr([weighted_graph.edges[edge]['weight'] for edge in all_edges], x.values())
@@ -62,6 +62,7 @@ def optimization(weighted_graph,T1,T2,program_type):
             #print( '%s: %g ' % (v.varName,v.x))
             matched_edge_id = (int(v.varName.split('[')[1].split(']')[0]))
             matched_edges[all_edges[matched_edge_id]] = v.x
+            print(f"Decision variable is {v.x}")
         elif v.x == 0:
             matched_edge_id = (int(v.varName.split('[')[1].split(']')[0]))
             zero_edges[all_edges[matched_edge_id]] = v.x
@@ -120,6 +121,7 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
         descendants_in_T1 = nx.descendants(T1.G,node_in_T1)
         nodes_in_T1.extend(ancestors_T1)
         nodes_in_T1.extend(descendants_in_T1)
+        nodes_in_T1.append(node_in_T1)
         # For T2
         nodes_in_T2 = []
         node_in_T2 = edge[1]
@@ -127,6 +129,18 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
         descendants_in_T2 = nx.descendants(T2.G, node_in_T2)
         nodes_in_T2.extend(ancestors_T2)
         nodes_in_T2.extend(descendants_in_T2)
+        nodes_in_T2.append(node_in_T2)
+        # Additonal edges which can't be detected below
+        # Extract edges with the specified starting node
+        edges_starting_from_node = [v for (u, v) in all_edges if u == node_in_T1]
+        nodes_in_T2.extend(edges_starting_from_node)
+        # Clean duplicates
+        nodes_in_T2 = list(set(nodes_in_T2))
+        # Extract edges with the specified ending node
+        edges_ending_at_node = [u for (u, v) in all_edges if v == node_in_T2]
+        nodes_in_T1.extend(edges_ending_at_node)
+        # Clean duplicates
+        nodes_in_T1 = list(set(nodes_in_T1))
         # Holders for sum (of decision variable x values)
         total_sum = 0
         # Detected edges are edges which are found to be in conflict with current edge, and they
@@ -134,11 +148,14 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
         detected_edges= []
         for start_node in nodes_in_T1:
             for end_node in nodes_in_T2:
+                if (start_node,end_node) == edge:
+                    continue
+                print("Current edge checked",(start_node,end_node) )
                 if (start_node,end_node) in all_edges:
                     total_sum = total_sum + all_edges[(start_node,end_node)]
                     detected_edges.append((start_node,end_node))
-        if not detected_edges:
-            continue
+        #if not detected_edges:
+            #continue
         if total_sum <= 3: # This is value alpha = 3
             shifted_graph = weighted_graph.copy()
             weight_of_current_edge = weighted_graph.edges[edge]['weight']
@@ -148,6 +165,8 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
                 nx.set_edge_attributes(shifted_graph, {detected_edge: new_weight}, 'weight')
             print(f"Edges in conflict with edge {edge} are edges: {detected_edges}")
             print("Decision variables sum for conflicting edges is ", total_sum)
+            #if total_sum == 0:
+            shifted_graph.remove_edge(*edge)
             m = matching(shifted_graph, T1, T2)
             if not set(detected_edges).intersection(m):
                 if edge not in m:
@@ -186,7 +205,7 @@ matched_nodes_T1 = []
 matched_nodes_T2 = []
 
 # If using final_result_canzar, loop through final_result_canzar list, each item is a tupple with edge (two nodes)
-# If using final_result_ilp, loop through final_result_canzar[1].keys():
+# If using final_result_ilp, loop through final_result_ilp[1].keys():
 for edge in final_result_canzar:
     u = edge[0]
     v = edge[1]
