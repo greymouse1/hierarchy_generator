@@ -97,9 +97,12 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
         for u, v, data in weighted_graph.edges(data=True):
             data['weight'] -= lambda_
         print(f"All edges in initial graph have subtracted lambda value {lambda_}.")
+    # Run LP
     zero_edges, matched_edges = optimization(weighted_graph,T1,T2, GRB.CONTINUOUS)
     print("Number of zero edges is", len(zero_edges))
     print("Number of matched edges is", len(matched_edges))
+    print("Matched edges are:")
+    print(matched_edges)
 
     all_edges = zero_edges.copy()  # Create a copy of dict1
     all_edges.update(matched_edges)
@@ -132,20 +135,21 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
         nodes_in_T2.append(node_in_T2)
         # Additonal edges which can't be detected below
         # Extract edges with the specified starting node
-        edges_starting_from_node = [v for (u, v) in all_edges if u == node_in_T1]
-        nodes_in_T2.extend(edges_starting_from_node)
+        #edges_starting_from_node = [v for (u, v) in all_edges if u == node_in_T1]
+        #nodes_in_T2.extend(edges_starting_from_node)
         # Clean duplicates
-        nodes_in_T2 = list(set(nodes_in_T2))
+        #nodes_in_T2 = list(set(nodes_in_T2))
         # Extract edges with the specified ending node
-        edges_ending_at_node = [u for (u, v) in all_edges if v == node_in_T2]
-        nodes_in_T1.extend(edges_ending_at_node)
+        #edges_ending_at_node = [u for (u, v) in all_edges if v == node_in_T2]
+        #nodes_in_T1.extend(edges_ending_at_node)
         # Clean duplicates
-        nodes_in_T1 = list(set(nodes_in_T1))
+        #nodes_in_T1 = list(set(nodes_in_T1))
         # Holders for sum (of decision variable x values)
         total_sum = 0
         # Detected edges are edges which are found to be in conflict with current edge, and they
         # belong to the latest solution ie they have some value for decision variable x
         detected_edges= []
+        '''
         for start_node in nodes_in_T1:
             for end_node in nodes_in_T2:
                 if (start_node,end_node) == edge:
@@ -154,6 +158,17 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
                 if (start_node,end_node) in all_edges:
                     total_sum = total_sum + all_edges[(start_node,end_node)]
                     detected_edges.append((start_node,end_node))
+        '''
+        for (u,v) in all_edges:
+            if u in nodes_in_T1:
+                detected_edges.append((u,v))
+            if v in nodes_in_T2:
+                detected_edges.append((u,v))
+            if edge in detected_edges:
+                detected_edges.remove(edge)
+
+        # Clean duplicates
+        detected_edges = list(set(detected_edges))
         #if not detected_edges:
             #continue
         if total_sum <= 3: # This is value alpha = 3
@@ -166,14 +181,14 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
             print(f"Edges in conflict with edge {edge} are edges: {detected_edges}")
             print("Decision variables sum for conflicting edges is ", total_sum)
             #if total_sum == 0:
+            # * is used to unpack a tupple
             shifted_graph.remove_edge(*edge)
             m = matching(shifted_graph, T1, T2)
             if not set(detected_edges).intersection(m):
-                if edge not in m:
-                    print(f"Extending M with edge {edge}")
-                    m.append(edge)
+                #if edge not in m:
+                print(f"Extending M with edge {edge}")
+                m.append(edge)
             return m
-
     #m = matching(weighted_graph, T1, T2)
     print("Final matching line reached, returning empty list")
     return []
