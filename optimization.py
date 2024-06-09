@@ -2,15 +2,16 @@ from gurobipy import *
 import networkx as nx
 from tqdm import tqdm
 import pickle
+import os
 
 
 # Load graph from file
-weighted_graph = nx.read_graphml("jaccard_index.graphml")
+weighted_graph = nx.read_graphml("jaccard_index_auerberg.graphml")
 
 # Load trees
-with open("T1.pkl", "rb") as f:
+with open("T1_auerberg.pkl", "rb") as f:
     T1 = pickle.load(f)
-with open("T2.pkl", "rb") as f:
+with open("T2_auerberg.pkl", "rb") as f:
     T2 = pickle.load(f)
 
 # Select whether you use ILP or LP. For ILP input GRB.INTEGER, for LP input GRB.CONTINUOUS
@@ -195,7 +196,7 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
 
 
 
-# Function for manually calculating value of objetive function from Canzar output
+# Function for manually calculating value of objective function from Canzar output
 def objFunctVal(inputGraph,resultingEdges):
     for (u,v) in resultingEdges:
         weight= inputGraph[u][v]['weight']
@@ -203,17 +204,26 @@ def objFunctVal(inputGraph,resultingEdges):
     objFunct = sum([inputGraph[u][v]['weight'] for (u,v) in resultingEdges])
     return objFunct
 
-# Run Canzar
+'''
+# Run Canzar separately
 # Arguments are graph, tree 1, tree 2 and lambda (optional, default is 0)
 final_result_canzar = matching(weighted_graph,T1,T2)
 print(final_result_canzar)
 print("Number of matches is ",len(final_result_canzar))
 print("Value of objective function is ", objFunctVal(weighted_graph,final_result_canzar))
+'''
 
-# Run ILP
-#final_result_ilp = optimization(weighted_graph,T1,T2,GRB.INTEGER)
-#print(final_result_ilp[1])
-#print("Number of matches is ", len(final_result_ilp[1]))
+'''
+# Run ILP separately
+final_result_ilp = optimization(weighted_graph,T1,T2,GRB.INTEGER)
+print(final_result_ilp[1])
+print("Number of matches is ", len(final_result_ilp[1]))
+'''
+
+'''
+# This part is used for saving matched nodes in two separate shp files
+# only in the case of using ILP or Canzar separately
+# For using ILP and Canzar in one go, use the code after and outside this comment
 
 # Get a list of all matched nodes from T1 and T2
 matched_nodes_T1 = []
@@ -231,5 +241,116 @@ for edge in final_result_canzar:
 # Get a list of all matched nodes from T2
 T1.saveShpGrouped(matched_nodes_T1)
 T2.saveShpGrouped(matched_nodes_T2)
+'''
+# Run ILP and Canzar at the same time
+# -one lambda value for both algorithms can be chosen, or leave it out - default value is 0
+# Results of both algorithms will be displayed in the end for comparison
+# shp files are save for
+# -ILP tree 1 matched nodes
+# -ILP tree 2 matched nodes
+# -Canzar tree 1 matched nodes
+# -Canzar tree 2 matched nodes
+def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
+    # This dictionary will hold final results in a format
+    # bothResults = ILP:(obj_f, [matched_edges]),CANZAR:(obj_f, [matched_edges])
+    bothResults = {}
+    # First important thing is that weights in bipartite graph are adjusted by the lambda value
+    # This is done before optimisation is ran so input graph has weights already adjusted
+    if lambda_ != 0:
+        for u, v, data in bipartiteGraph.edges(data=True):
+            data['weight'] -= lambda_
+        print(f"All edges in initial graph have subtracted lambda value {lambda_}.")
+    # Now that graphs are adjusted, the ILP can be ran.
+    final_result_ilp = optimization(bipartiteGraph, tree1, tree2, GRB.INTEGER)
+    matched_nodes_T1_ILP = []
+    matched_nodes_T2_ILP = []
+    for edge in final_result_ilp[1].keys():
+        u = edge[0]
+        v = edge[1]
+        matched_nodes_T1_ILP.append(u)
+        matched_nodes_T2_ILP.append(v)
+
+    # Value of the objective function is printed by default by Gurobi prompt
+    # Since I can't catch that variable, I go indirectly and pull weights from the bipartite graph with
+    # the results of matching tupples
+    objValueILP = objFunctVal(bipartiteGraph, final_result_ilp[1].keys())
+
+    # Store values in bothResults variable so it is possible to show it in the end
+    bothResults['ILP'] = (objValueILP,final_result_ilp[1].keys())
+
+    # Create folder where shp files will be saved
+
+    # Get the current working directory
+    current_directory = os.getcwd()
+
+    # Define the name of the new directory to be created
+    new_directory_ILP = 'shp_files_ILP'
+
+    # Create the full path to the new directory
+    output_directory_ILP = os.path.join(current_directory, new_directory_ILP)
+
+    # Create the new directory if it doesn't exist
+    os.makedirs(output_directory_ILP, exist_ok=True)
+
+    # Save SHP files in the specified directory, format is of "list,directory_name"
+    T1.saveShpGrouped(matched_nodes_T1_ILP,output_directory_ILP)
+    T2.saveShpGrouped(matched_nodes_T2_ILP,output_directory_ILP)
+
+    # Now run Canzar approximation algorithm
+    final_result_canzar = matching(bipartiteGraph, tree1, tree2)
+    matched_nodes_T1_CANZAR = []
+    matched_nodes_T2_CANZAR = []
+    for edge in final_result_canzar:
+        u = edge[0]
+        v = edge[1]
+        matched_nodes_T1_CANZAR.append(u)
+        matched_nodes_T2_CANZAR.append(v)
+
+    # Value of the objective function is printed by default by Gurobi prompt
+    # Since I can't catch that variable, I go indirectly and pull weights from the bipartite graph with
+    # the results of matching tupples
+    objValueCANZAR = objFunctVal(bipartiteGraph, final_result_canzar)
+
+    # Store values in bothResults variable so it is possible to show it in the end
+    bothResults['CANZAR'] = (objValueCANZAR, final_result_canzar)
+
+    # Define the name of the new directory to be created
+    new_directory_CANZAR = 'shp_files_CANZAR'
+
+    # Create the full path to the new directory
+    output_directory_CANZAR = os.path.join(current_directory, new_directory_CANZAR)
+
+    # Create the new directory if it doesn't exist
+    os.makedirs(output_directory_CANZAR, exist_ok=True)
+
+    # Save SHP files in the specified directory, format is of "list,directory_name"
+    T1.saveShpGrouped(matched_nodes_T1_CANZAR, output_directory_CANZAR)
+    T2.saveShpGrouped(matched_nodes_T2_CANZAR, output_directory_CANZAR)
+
+    print(f"Value of objective function of ILP is {bothResults['ILP'][0]}")
+    print(f"Value of objective function of CANZAR is {bothResults['CANZAR'][0]}")
+    print(f"Matched edges of ILP are {bothResults['ILP'][1]}")
+    print(f"Matched edges of CANZAR are {bothResults['CANZAR'][1]}")
+
+    # Convert lists to sets
+    set1 = set(bothResults['ILP'][1])
+    set2 = set(bothResults['CANZAR'][1])
+
+    # Check if the sets are identical
+    if set1 == set2:
+        print("100% match of edges")
+    else:
+        # Find common edges
+        common_edges = set1 & set2
+        print(f"Edges present in both lists ({len(common_edges)}): {common_edges}")
+
+        # Find unique edges in the first list
+        unique_to_list1 = set1 - set2
+        print(f"Edges present only in the first list ({len(unique_to_list1)}): {unique_to_list1}")
+
+        # Find unique edges in the second list
+        unique_to_list2 = set2 - set1
+        print(f"Edges present only in the second list ({len(unique_to_list2)}): {unique_to_list2}")
 
 
+runBothAlgorithms(weighted_graph,T1,T2,0.3)

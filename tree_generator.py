@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import re
 from tqdm import tqdm
-
+import os
 # whole function which builds tree with all nodes and surface areas
 # input wkb text file with all triangles, first line are original building polygons
 #def treeGenerator(wkb_text_file,tree_name):
@@ -232,7 +232,7 @@ class treeGenerator:
     # which have been matched. Function will pull leafs of all these nodes, group leaf polygons, unionise
     # them and create a buffer. This buffer is saved into .shp file. Such layer can be overlaid with starting
     # .wkt files so grouping can be visualized efficiently
-    def saveShpGrouped(self, nodeList):
+    def saveShpGrouped(self, nodeList, directory_name):
         # initialise new GeoDataframe
         new_gdf = gpd.GeoDataFrame()
 
@@ -246,7 +246,7 @@ class treeGenerator:
             new_gdf = pd.concat([new_gdf,new_geometry_gdf], ignore_index = True)
 
         if not new_gdf.empty:
-            new_gdf.to_file(f"{self.tree_name}_matched_nodes.shp")
+            new_gdf.to_file(os.path.join(directory_name,f"{self.tree_name}_matched_nodes.shp"))
             print(f"New GeoDataFrame for {self.tree_name} matched edges was saved successfully.")
         else:
             print("No geometries found for nodes ")
@@ -285,7 +285,7 @@ def jaccardIndex(tree1,tree2):
     # if there is a node in tree 2 for which intersection is 0, then whole subtree of that node is removed from tree 2
     # iterator, so children wouldn't be checked in the following iterations (since if intersection with parent is 0, that
     # means intersection with every child will also be 0
-    # as edges between trees are checked and Jaccard Index is calculated, resulting deges with JI are packed
+    # as edges between trees are checked and Jaccard Index is calculated, resulting edges with JI are packed
     # into a new graph
 
     # Edges to be added

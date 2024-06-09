@@ -5,16 +5,16 @@ import pickle
 import networkx as nx
 
 # Instantiate the Dataset class
-#dataset1 = Dataset(name='auerberg_atkis',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/auerberg_atkis',epsilon=0)
-#dataset2 = Dataset(name='auerberg_osm',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/auerberg_osm',epsilon=0)
+dataset1 = Dataset(name='auerberg_atkis',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/auerberg_atkis',epsilon=0)
+dataset2 = Dataset(name='auerberg_osm',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/auerberg_osm',epsilon=0)
 
 # Small test dataset
 #dataset1 = Dataset(name='beuel-ost_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/beuel-ost_atkis',epsilon=0)
 #dataset2 = Dataset(name='beuel-ost_osm',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/beuel-ost_osm',epsilon=0)
 
 # Dummy test dataset
-dataset1 = Dataset(name='dummy',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy',epsilon=0)
-dataset2 = Dataset(name='dummy2',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy2',epsilon=0)
+#dataset1 = Dataset(name='dummy',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy',epsilon=0)
+#dataset2 = Dataset(name='dummy2',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy2',epsilon=0)
 
 # Load data with eps=0
 dataset1.loadData(0)
@@ -38,9 +38,9 @@ T1.drawGraph()
 T2.drawGraph()
 
 # Save trees as pickles
-with open("T1.pkl", "wb") as f:
+with open("T1_auerberg.pkl", "wb") as f:
     pickle.dump(T1, f)
-with open("T2.pkl", "wb") as f:
+with open("T2_auerberg.pkl", "wb") as f:
     pickle.dump(T2, f)
 
 # Calculate weights
@@ -62,7 +62,7 @@ with open("T2.pkl", "wb") as f:
 
 
 weighted_graph = jaccardIndex(T1,T2)
-nx.write_graphml(weighted_graph, "jaccard_index.graphml")
+nx.write_graphml(weighted_graph, "jaccard_index_auerberg.graphml")
 print(weighted_graph)
 
 
