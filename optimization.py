@@ -3,15 +3,16 @@ import networkx as nx
 from tqdm import tqdm
 import pickle
 import os
+import json
 
 
 # Load graph from file
-weighted_graph = nx.read_graphml("jaccard_index_auerberg.graphml")
+weighted_graph = nx.read_graphml("jaccard_index.graphml")
 
 # Load trees
-with open("T1_auerberg.pkl", "rb") as f:
+with open("T1.pkl", "rb") as f:
     T1 = pickle.load(f)
-with open("T2_auerberg.pkl", "rb") as f:
+with open("T2.pkl", "rb") as f:
     T2 = pickle.load(f)
 
 # Select whether you use ILP or LP. For ILP input GRB.INTEGER, for LP input GRB.CONTINUOUS
@@ -68,7 +69,7 @@ def optimization(weighted_graph,T1,T2,program_type):
             matched_edge_id = (int(v.varName.split('[')[1].split(']')[0]))
             zero_edges[all_edges[matched_edge_id]] = v.x
 
-
+    '''
     # Define function for calculating number of leafs
     def number_of_leaf_nodes(tree, node):
         descendants = nx.descendants(tree, node)
@@ -80,8 +81,9 @@ def optimization(weighted_graph,T1,T2,program_type):
             return len(leaf_nodes)
         else:
             return 1
-
-    # This part is printing m:n matches
+    '''
+    # This part is printing m:n matches.
+    # It iterates through keys while first,second are unpacking the tupples
     #for first,second in matched_edges:
         #m = number_of_leaf_nodes(T1.G,first)
         #n = number_of_leaf_nodes(T2.G,second)
@@ -292,9 +294,10 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
     # Create the new directory if it doesn't exist
     os.makedirs(output_directory_ILP, exist_ok=True)
 
-    # Save SHP files in the specified directory, format is of "list,directory_name"
+    # Save SHP files for matched nodes in the specified directory, format is of "list,directory_name"
     T1.saveShpGrouped(matched_nodes_T1_ILP,output_directory_ILP)
     T2.saveShpGrouped(matched_nodes_T2_ILP,output_directory_ILP)
+
 
     # Now run Canzar approximation algorithm
     final_result_canzar = matching(bipartiteGraph, tree1, tree2)
@@ -323,22 +326,94 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
     # Create the new directory if it doesn't exist
     os.makedirs(output_directory_CANZAR, exist_ok=True)
 
-    # Save SHP files in the specified directory, format is of "list,directory_name"
+    # Save SHP files for matched nodes in the specified directory, format is of "list,directory_name"
     T1.saveShpGrouped(matched_nodes_T1_CANZAR, output_directory_CANZAR)
     T2.saveShpGrouped(matched_nodes_T2_CANZAR, output_directory_CANZAR)
 
     print(f"Value of objective function of ILP is {bothResults['ILP'][0]}")
     print(f"Value of objective function of CANZAR is {bothResults['CANZAR'][0]}")
-    print(f"Matched edges of ILP are {bothResults['ILP'][1]}")
-    print(f"Matched edges of CANZAR are {bothResults['CANZAR'][1]}")
+    #print(f"Matched edges of ILP are {bothResults['ILP'][1]}")
+    #print(f"Matched edges of CANZAR are {bothResults['CANZAR'][1]}")
 
+    '''
+    Writing all edges and leafs to a file
+    '''
+
+    # Save detailed file about matches
+    def number_of_leaf_nodes(tree, node):
+        descendants = nx.descendants(tree, node)
+        leaf_nodes = [n for n in descendants if tree.out_degree(n) == 0]
+        # this is because amount of leaves will be either 0 which means the match is
+        # one of the base polygons, or 2 or more. It can't be 1 because parent node
+        # is by default made by merging two or more polygons
+        if len(leaf_nodes) >= 2:
+            return len(leaf_nodes), leaf_nodes
+        else:
+            return 1, []
+
+    def writer_function(matched_edges):
+        # Total number of matched base polygons is total number of matched leaves
+        total_matched_T1 = 0
+        total_matched_T2 = 0
+        # List for all matches and construction of json template
+        matches = []
+        # Iterate through keys while first, second are unpacking the tuples
+        for first, second in matched_edges[1]:
+            m, leaf_nodes_first = number_of_leaf_nodes(T1.G, first)
+            n, leaf_nodes_second = number_of_leaf_nodes(T2.G, second)
+
+            # Update the counter
+            total_matched_T1 += m
+            total_matched_T2 += n
+
+            # Create a match dictionary
+            match = {
+                "edge": [first, second],
+                "match": f"{m}:{n}",
+                "leaf_nodes_first": leaf_nodes_first,
+                "leaf_nodes_second": leaf_nodes_second
+            }
+
+            matches.append(match)
+
+        # Create a header
+        total_pol_T1 = len(T1.leaf_list)
+        total_pol_T2 = len(T2.leaf_list)
+
+        print(f"There are {total_matched_T1} matched polygons out of {total_pol_T1} in T1."
+              f" This means that a total of {(total_matched_T1 / total_pol_T1) * 100}% of polygons in this dataset are matched. " )
+        print(f"There are {total_matched_T2} matched polygons out of {total_pol_T2} in T2."
+              f" This means that a total of {(total_matched_T2 / total_pol_T2) * 100}% of polygons in this dataset are matched. ")
+
+        header = {
+            "value_of_objective_function": matched_edges[0],
+            "n_matched_polygons_T1": total_matched_T1,
+            "n_matched_polygons_T2": total_matched_T2,
+            "n_total_polygons_T1": total_pol_T1,
+            "n_total_polygons_T2": total_pol_T2
+        }
+        matches.insert(0, header)
+        # Save as json
+        # Write matches list to the JSON file
+        json.dump(matches, file, indent=4)
+
+    # Open a file in write mode
+    with open("matches_ILP.txt", "w") as file:
+        # Write matches from ILP
+        writer_function(bothResults['ILP'])
+    with open("matches_CANZAR.txt", "w") as file:
+        # Write matches from Canzar
+        writer_function(bothResults['CANZAR'])
+    '''
+    End of writing of edges to a file
+    '''
     # Convert lists to sets
     set1 = set(bothResults['ILP'][1])
     set2 = set(bothResults['CANZAR'][1])
 
     # Check if the sets are identical
     if set1 == set2:
-        print("100% match of edges")
+        print("100% match of edges between ILP and Canzar approximation algorithm.")
     else:
         # Find common edges
         common_edges = set1 & set2
@@ -353,4 +428,6 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
         print(f"Edges present only in the second list ({len(unique_to_list2)}): {unique_to_list2}")
 
 
-runBothAlgorithms(weighted_graph,T1,T2,0.3)
+runBothAlgorithms(weighted_graph,T1,T2)
+
+

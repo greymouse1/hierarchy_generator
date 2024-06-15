@@ -250,6 +250,25 @@ class treeGenerator:
             print(f"New GeoDataFrame for {self.tree_name} matched edges was saved successfully.")
         else:
             print("No geometries found for nodes ")
+
+        # Code for saving base polygons into shp
+        base_gdf = gpd.GeoDataFrame()
+
+        for node in self.tree_leaves:
+            # Since original IDs are only numbers, and IDs from matches have tree name preceding the number,
+            # I have to remove the tree name
+            node_id_trimmed = int(node.split("_")[1])
+            my_geometry = self.polygon_storage.loc[
+                self.polygon_storage['ID'] == node_id_trimmed, 'geometry']
+            new_geometry = {'ID': node, 'geometry': my_geometry}
+            new_geometry_gdf = gpd.GeoDataFrame(new_geometry, geometry='geometry')
+            base_gdf = pd.concat([base_gdf, new_geometry_gdf], ignore_index=True)
+
+        if not base_gdf.empty:
+            base_gdf.to_file(os.path.join(directory_name,f"{self.tree_name}_base_nodes.shp"))
+            print(f"New GeoDataFrame for {self.tree_name} base nodes was saved successfully.")
+        else:
+            print("No geometries found for base nodes ")
 def jaccardIndex(tree1,tree2):
 
     # create new empty graph
