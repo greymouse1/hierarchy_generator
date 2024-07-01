@@ -46,7 +46,7 @@ if __name__ == '__main__':
     # Run adopt merge for all datasets
     epsilons = [0.1, 1e-6]
     for dataset in sorted(datasets):
-        command = f"java -Xmx{1}G -jar generalization.jar " + \
+        command = f"java -Xmx{4}G -jar generalization.jar " + \
         f"-m {method} -d {dataset.name} -rf {folder} " + \
         f"-t {1} -p \"{path_string}\""
         print(command)

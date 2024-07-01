@@ -184,7 +184,7 @@ class treeGenerator:
                     next
         # This logic will check if polygons_gdf contains more than one element
         # If everything is correct, it will contain only one element and that is the root
-        # If however there are more than one elements, that means we have some polygons which are
+        # If however there is more than one element, that means we have some polygons which are
         # too far away from everything else and Delaunay triangulation for them was not performed
         # meaning that they are not connected with triangles to other polygons and can't be part of the tree
         # In order for code to work, they have to be removed from graph G and list of leaves
@@ -205,7 +205,17 @@ class treeGenerator:
             # Remove IDs from tree_leaves list
             self.tree_leaves = [leaf for leaf in self.tree_leaves if leaf not in modified_ids]
 
+            # Activate additional cleaner of disconnected nodes
+            self.remove_disconnected_nodes()
+
         # self.polygon_storage.to_file("tree_polygons.shp") this is not needed right now
+
+    def remove_disconnected_nodes(self):
+        largest_component = max(nx.weakly_connected_components(self.G), key=len)
+        nodes_to_remove = set(self.G.nodes) - largest_component
+        self.G.remove_nodes_from(nodes_to_remove)
+        self.tree_leaves = [leaf for leaf in self.tree_leaves if leaf not in nodes_to_remove]
+        print(f"Additional check removed disconnected nodes {(nodes_to_remove)}")
 
     def calculateLeafs(self):
         for i in range(len(self.tree_leaves)):
@@ -227,6 +237,7 @@ class treeGenerator:
         # below works well, plots tree into png
         p = nx.drawing.nx_pydot.to_pydot(G_without_area)
         p.write_png(f'{self.tree_name}_topography.png')
+        print(f"Graph for {self.tree_name} saved in *,png file")
 
     # This function is called later on when matching process was done. Input into this is list of nodes
     # which have been matched. Function will pull leafs of all these nodes, group leaf polygons, unionise

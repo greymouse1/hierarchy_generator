@@ -4,15 +4,17 @@ from tqdm import tqdm
 import pickle
 import os
 import json
+import time
+import datetime
 
 
 # Load graph from file
-weighted_graph = nx.read_graphml("jaccard_index.graphml")
+weighted_graph = nx.read_graphml("jaccard_index_beuel_ost_01.graphml")
 
 # Load trees
-with open("T1.pkl", "rb") as f:
+with open("T1_beuel_ost_atkis_01.pkl", "rb") as f:
     T1 = pickle.load(f)
-with open("T2.pkl", "rb") as f:
+with open("T2_beuel_ost_osm_01.pkl", "rb") as f:
     T2 = pickle.load(f)
 
 # Select whether you use ILP or LP. For ILP input GRB.INTEGER, for LP input GRB.CONTINUOUS
@@ -167,14 +169,18 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
                 detected_edges.append((u,v))
             if v in nodes_in_T2:
                 detected_edges.append((u,v))
+            detected_edges = list(set(detected_edges))
             if edge in detected_edges:
                 detected_edges.remove(edge)
 
-        # Clean duplicates
+        # Clean duplicates one more time
         detected_edges = list(set(detected_edges))
-        #if not detected_edges:
-            #continue
-        if total_sum <= 3: # This is value alpha = 3
+
+        # Update the sum with weights of the conflicting edges
+        for (u,v) in detected_edges:
+            total_sum = total_sum + all_edges[(u,v)]
+
+        if total_sum <= 3 and total_sum > 0: # This is value alpha = 3
             shifted_graph = weighted_graph.copy()
             weight_of_current_edge = weighted_graph.edges[edge]['weight']
             for detected_edge in detected_edges:
@@ -185,16 +191,24 @@ def matching(weighted_graph, T1, T2, lambda_ = 0):
             print("Decision variables sum for conflicting edges is ", total_sum)
             #if total_sum == 0:
             # * is used to unpack a tupple
-            shifted_graph.remove_edge(*edge)
+            #shifted_graph.remove_edge(*edge)
             m = matching(shifted_graph, T1, T2)
-            if not set(detected_edges).intersection(m):
+            if not set(detected_edges).intersection(m) and edge not in m:
                 #if edge not in m:
                 print(f"Extending M with edge {edge}")
                 m.append(edge)
             return m
-    #m = matching(weighted_graph, T1, T2)
-    print("Final matching line reached, returning empty list")
-    return []
+        #m = matching(weighted_graph, T1, T2)
+        else:
+            print("Final matching line reached.")
+            mylist=[]
+            for edge in weighted_graph.edges():
+                if all_edges[edge] == 1:
+                    mylist.append(edge)
+                    print(all_edges[edge])
+                    print("Appended edge of x=1, this is edge",edge)
+            return mylist
+
 
 
 
@@ -252,7 +266,7 @@ T2.saveShpGrouped(matched_nodes_T2)
 # -ILP tree 2 matched nodes
 # -Canzar tree 1 matched nodes
 # -Canzar tree 2 matched nodes
-def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
+def runBothAlgorithms(bipartiteGraph, tree1, tree2, name , lambda_=0):
     # This dictionary will hold final results in a format
     # bothResults = ILP:(obj_f, [matched_edges]),CANZAR:(obj_f, [matched_edges])
     bothResults = {}
@@ -263,7 +277,11 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
             data['weight'] -= lambda_
         print(f"All edges in initial graph have subtracted lambda value {lambda_}.")
     # Now that graphs are adjusted, the ILP can be ran.
+    # Run timer for ILP
+    start_time_ilp = time.time()
     final_result_ilp = optimization(bipartiteGraph, tree1, tree2, GRB.INTEGER)
+    end_time_ilp = time.time()
+    total_time_ilp = end_time_ilp-start_time_ilp
     matched_nodes_T1_ILP = []
     matched_nodes_T2_ILP = []
     for edge in final_result_ilp[1].keys():
@@ -282,14 +300,22 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
 
     # Create folder where shp files will be saved
 
+    # Generate a timestamp
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Create a new directory with the format "optimization_timestamp"
+    dir_name = f'{name}_{timestamp}'
+    os.makedirs(dir_name)
+
     # Get the current working directory
     current_directory = os.getcwd()
+    timestamped_directory = os.path.join(current_directory,dir_name)
 
     # Define the name of the new directory to be created
     new_directory_ILP = 'shp_files_ILP'
 
     # Create the full path to the new directory
-    output_directory_ILP = os.path.join(current_directory, new_directory_ILP)
+    output_directory_ILP = os.path.join(timestamped_directory, new_directory_ILP)
 
     # Create the new directory if it doesn't exist
     os.makedirs(output_directory_ILP, exist_ok=True)
@@ -300,7 +326,11 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
 
 
     # Now run Canzar approximation algorithm
+    # Time Canzar
+    start_time_canzar = time.time()
     final_result_canzar = matching(bipartiteGraph, tree1, tree2)
+    end_time_canzar = time.time()
+    total_time_canzar = end_time_canzar-start_time_canzar
     matched_nodes_T1_CANZAR = []
     matched_nodes_T2_CANZAR = []
     for edge in final_result_canzar:
@@ -321,7 +351,7 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
     new_directory_CANZAR = 'shp_files_CANZAR'
 
     # Create the full path to the new directory
-    output_directory_CANZAR = os.path.join(current_directory, new_directory_CANZAR)
+    output_directory_CANZAR = os.path.join(timestamped_directory, new_directory_CANZAR)
 
     # Create the new directory if it doesn't exist
     os.makedirs(output_directory_CANZAR, exist_ok=True)
@@ -332,9 +362,24 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
 
     print(f"Value of objective function of ILP is {bothResults['ILP'][0]}")
     print(f"Value of objective function of CANZAR is {bothResults['CANZAR'][0]}")
-    #print(f"Matched edges of ILP are {bothResults['ILP'][1]}")
-    #print(f"Matched edges of CANZAR are {bothResults['CANZAR'][1]}")
+    print(f"Time for running ILP is {total_time_ilp}")
+    print(f"Time for running Canzar is {total_time_canzar}")
+    print(f"Number of matched edges in ILP is {len(bothResults['ILP'][1])}")
+    print(f"Number of matched edges in CANZAR is {len(bothResults['CANZAR'][1])}")
+    print(f"Matched edges of ILP are {bothResults['ILP'][1]}")
+    print(f"Matched edges of CANZAR are {bothResults['CANZAR'][1]}")
 
+    # Create the output file name within the new directory
+    report_file = os.path.join(dir_name, 'report.txt')
+
+    # Save report
+    with open(report_file, 'w') as file:
+        file.write(f"Value of objective function of ILP is {bothResults['ILP'][0]}\n")
+        file.write(f"Value of objective function of CANZAR is {bothResults['CANZAR'][0]}\n")
+        file.write(f"Time for running ILP is {total_time_ilp}\n")
+        file.write(f"Time for running Canzar is {total_time_canzar}\n")
+        file.write(f"Number of matched edges in ILP is {len(bothResults['ILP'][1])}\n")
+        file.write(f"Number of matched edges in CANZAR is {len(bothResults['CANZAR'][1])}\n")
     '''
     Writing all edges and leafs to a file
     '''
@@ -386,11 +431,14 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
               f" This means that a total of {(total_matched_T2 / total_pol_T2) * 100}% of polygons in this dataset are matched. ")
 
         header = {
+            "number of matched edges":  len(matched_edges[1]),
             "value_of_objective_function": matched_edges[0],
             "n_matched_polygons_T1": total_matched_T1,
-            "n_matched_polygons_T2": total_matched_T2,
             "n_total_polygons_T1": total_pol_T1,
-            "n_total_polygons_T2": total_pol_T2
+            "percentage_matched_polygons_T1": (total_matched_T1/total_pol_T1 * 100),
+            "n_matched_polygons_T2": total_matched_T2,
+            "n_total_polygons_T2": total_pol_T2,
+            "percentage_matched_polygons_T2": (total_matched_T2 / total_pol_T2 * 100)
         }
         matches.insert(0, header)
         # Save as json
@@ -398,10 +446,12 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
         json.dump(matches, file, indent=4)
 
     # Open a file in write mode
-    with open("matches_ILP.txt", "w") as file:
+    filepath_ilp = os.path.join(timestamped_directory, "matches_ILP.json")
+    with open(filepath_ilp, "w") as file:
         # Write matches from ILP
         writer_function(bothResults['ILP'])
-    with open("matches_CANZAR.txt", "w") as file:
+    filepath_canzar = os.path.join(timestamped_directory, "matches_canzar.json")
+    with open(filepath_canzar, "w") as file:
         # Write matches from Canzar
         writer_function(bothResults['CANZAR'])
     '''
@@ -414,20 +464,26 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, lambda_=0):
     # Check if the sets are identical
     if set1 == set2:
         print("100% match of edges between ILP and Canzar approximation algorithm.")
+        with open(report_file, 'a') as file:
+            file.write("100% match of edges between ILP and Canzar approximation algorithm.\n")
     else:
         # Find common edges
         common_edges = set1 & set2
-        print(f"Edges present in both lists ({len(common_edges)}): {common_edges}")
+        print(f"Edges present in both matchings ({len(common_edges)}): {common_edges}")
 
         # Find unique edges in the first list
         unique_to_list1 = set1 - set2
-        print(f"Edges present only in the first list ({len(unique_to_list1)}): {unique_to_list1}")
+        print(f"Edges present only in the ILP ({len(unique_to_list1)}): {unique_to_list1}")
 
         # Find unique edges in the second list
         unique_to_list2 = set2 - set1
-        print(f"Edges present only in the second list ({len(unique_to_list2)}): {unique_to_list2}")
+        print(f"Edges present only in the CANZAR ({len(unique_to_list2)}): {unique_to_list2}")
 
-
-runBothAlgorithms(weighted_graph,T1,T2)
+        with open(report_file, 'a') as file:
+            file.write(f"Edges present in both matchings ({len(common_edges)}): {common_edges}\n")
+            file.write(f"Edges present only in the ILP ({len(unique_to_list1)}): {unique_to_list1}\n")
+            file.write(f"Edges present only in the CANZAR ({len(unique_to_list2)}): {unique_to_list2}\n")
+# Lambda value is optional as fourth argument
+runBothAlgorithms(weighted_graph,T1,T2,"beuel-ost-0.1")
 
 
