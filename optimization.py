@@ -9,12 +9,12 @@ import datetime
 
 
 # Load graph from file
-weighted_graph = nx.read_graphml("jaccard_index_beuel_ost_01.graphml")
+weighted_graph = nx.read_graphml("jaccard_index_endenich_cut.graphml")
 
 # Load trees
-with open("T1_beuel_ost_atkis_01.pkl", "rb") as f:
+with open("T1_endenich_atkis_cut.pkl", "rb") as f:
     T1 = pickle.load(f)
-with open("T2_beuel_ost_osm_01.pkl", "rb") as f:
+with open("T2_endenich_osm_cut.pkl", "rb") as f:
     T2 = pickle.load(f)
 
 # Select whether you use ILP or LP. For ILP input GRB.INTEGER, for LP input GRB.CONTINUOUS
@@ -484,6 +484,6 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, name , lambda_=0):
             file.write(f"Edges present only in the ILP ({len(unique_to_list1)}): {unique_to_list1}\n")
             file.write(f"Edges present only in the CANZAR ({len(unique_to_list2)}): {unique_to_list2}\n")
 # Lambda value is optional as fourth argument
-runBothAlgorithms(weighted_graph,T1,T2,"beuel-ost-0.1")
+runBothAlgorithms(weighted_graph,T1,T2,"endenich_cut")
 
 
