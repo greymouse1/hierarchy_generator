@@ -6,15 +6,16 @@ import os
 import json
 import time
 import datetime
+import glob
 
 
 # Load graph from file
-weighted_graph = nx.read_graphml("jaccard_index_endenich_cut.graphml")
+weighted_graph = nx.read_graphml("batch/auerberg_alex/jaccard_index_auerberg_alex.graphml")
 
 # Load trees
-with open("T1_endenich_atkis_cut.pkl", "rb") as f:
+with open("batch/auerberg_alex/T1_auerberg_atkis_alex.pkl", "rb") as f:
     T1 = pickle.load(f)
-with open("T2_endenich_osm_cut.pkl", "rb") as f:
+with open("batch/auerberg_alex/T2_auerberg_osm_alex.pkl", "rb") as f:
     T2 = pickle.load(f)
 
 # Select whether you use ILP or LP. For ILP input GRB.INTEGER, for LP input GRB.CONTINUOUS
@@ -309,6 +310,7 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, name , lambda_=0):
 
     # Get the current working directory
     current_directory = os.getcwd()
+    current_directory = os.path.join("optimizations/")
     timestamped_directory = os.path.join(current_directory,dir_name)
 
     # Define the name of the new directory to be created
@@ -366,11 +368,11 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, name , lambda_=0):
     print(f"Time for running Canzar is {total_time_canzar}")
     print(f"Number of matched edges in ILP is {len(bothResults['ILP'][1])}")
     print(f"Number of matched edges in CANZAR is {len(bothResults['CANZAR'][1])}")
-    print(f"Matched edges of ILP are {bothResults['ILP'][1]}")
-    print(f"Matched edges of CANZAR are {bothResults['CANZAR'][1]}")
+    #print(f"Matched edges of ILP are {bothResults['ILP'][1]}")
+    #print(f"Matched edges of CANZAR are {bothResults['CANZAR'][1]}")
 
     # Create the output file name within the new directory
-    report_file = os.path.join(dir_name, 'report.txt')
+    report_file = os.path.join(timestamped_directory, 'report.txt')
 
     # Save report
     with open(report_file, 'w') as file:
@@ -461,8 +463,8 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, name , lambda_=0):
     set1 = set(bothResults['ILP'][1])
     set2 = set(bothResults['CANZAR'][1])
 
-    # Check if the sets are identical
-    if set1 == set2:
+    # Check if objective function value for ILP and CANZAR is equal
+    if {bothResults['ILP'][0]} == {bothResults['CANZAR'][0]}:
         print("100% match of edges between ILP and Canzar approximation algorithm.")
         with open(report_file, 'a') as file:
             file.write("100% match of edges between ILP and Canzar approximation algorithm.\n")
@@ -479,11 +481,66 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, name , lambda_=0):
         unique_to_list2 = set2 - set1
         print(f"Edges present only in the CANZAR ({len(unique_to_list2)}): {unique_to_list2}")
 
+        # Find percentage of how close is Canzar to ILP
+        percentage_of_overlap = (bothResults['CANZAR'][0] / bothResults['ILP'][0]) * 100
+
         with open(report_file, 'a') as file:
             file.write(f"Edges present in both matchings ({len(common_edges)}): {common_edges}\n")
             file.write(f"Edges present only in the ILP ({len(unique_to_list1)}): {unique_to_list1}\n")
             file.write(f"Edges present only in the CANZAR ({len(unique_to_list2)}): {unique_to_list2}\n")
-# Lambda value is optional as fourth argument
-runBothAlgorithms(weighted_graph,T1,T2,"endenich_cut")
+            file.write(f"Percentage of match between CANZAR and ILP (fCANZAR / fILP) is {percentage_of_overlap}\n")
+
+# Lambda value is optional as the fourth argument
+runBothAlgorithms(weighted_graph,T1,T2,"auerberg_alex", )
+
+
+'''
+# Batch processing
+# Define the parent directory containing the folders
+parent_directory = 'batch'
+
+# Iterate over each folder in the parent directory
+for folder_name in os.listdir(parent_directory):
+    print(f"Current dataset is {folder_name}")
+    folder_path = os.path.join(parent_directory, folder_name)
+
+    # Check if the path is a directory
+    if os.path.isdir(folder_path):
+        # Find the graphml file
+        graphml_file = glob.glob(os.path.join(folder_path, '*.graphml'))[0]
+
+        # Find the pkl files
+        pkl_files = glob.glob(os.path.join(folder_path, '*.pkl'))
+
+        # Assign files to variables based on their names
+        for pkl_file in pkl_files:
+            if 'T1' in os.path.basename(pkl_file):
+                T1_file = pkl_file
+            elif 'T2' in os.path.basename(pkl_file):
+                T2_file = pkl_file
+
+        # Load graph from file
+        weighted_graph = nx.read_graphml(graphml_file)
+
+        # Load trees
+        with open(T1_file, "rb") as f:
+            T1 = pickle.load(f)
+        with open(T2_file, "rb") as f:
+            T2 = pickle.load(f)
+
+        # Here you can use weighted_graph, T1, and T2 as needed
+        print(f'Processed folder: {folder_name}')
+        print(f'GraphML file: {graphml_file}')
+        print(f'T1 file: {T1_file}')
+        print(f'T2 file: {T2_file}')
+
+        # Run code for all values of lambda
+        lambda_list = [0,0.1,0.2,0.3]
+
+        for current_lambda in lambda_list:
+            print(f"Current lambda value is {current_lambda}")
+            runBothAlgorithms(weighted_graph, T1, T2, name=f"{folder_name}_{current_lambda}", lambda_=current_lambda)
+
+'''
 
 
