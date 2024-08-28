@@ -490,7 +490,7 @@ def runBothAlgorithms(bipartiteGraph, tree1, tree2, name , lambda_=0):
             file.write(f"Edges present only in the CANZAR ({len(unique_to_list2)}): {unique_to_list2}\n")
             file.write(f"Percentage of match between CANZAR and ILP (fCANZAR / fILP) is {percentage_of_overlap}\n")
 
-# Lambda value is optional as the fourth argument
+# Lambda value is optional as the fourth argument2
 runBothAlgorithms(weighted_graph,T1,T2,"auerberg_alex", )
 
 

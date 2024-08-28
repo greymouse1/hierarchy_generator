@@ -3,25 +3,17 @@ from dataset import Dataset
 from tree_generator import treeGenerator, jaccardIndex
 import pickle
 import networkx as nx
+import datetime
+import os
 
-# Instantiate the Dataset class
-dataset1 = Dataset(name='endenich_atkis_cut',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/endenich_atkis_cut',epsilon=0)
-dataset2 = Dataset(name='endenich_osm_cut',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/endenich_osm_cut',epsilon=0)
-
-# Small test dataset
-#dataset1 = Dataset(name='beuel-ost_atkis',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/beuel-ost_atkis',epsilon=0)
-#dataset2 = Dataset(name='beuel-ost_osm',path='/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder/pythonProject/tri/beuel-ost_osm',epsilon=0)
-
-# Dummy test dataset
-#dataset1 = Dataset(name='dummy',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy',epsilon=0)
-#dataset2 = Dataset(name='dummy2',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy2',epsilon=0)
+# Test dataset
+dataset1 = Dataset(name='dummy',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy',epsilon=0)
+dataset2 = Dataset(name='dummy2',path='/Users/shark/Desktop/dontsync.nosync/thesis/hierarchy_generator/tri/dummy2',epsilon=0)
 
 # Load data with eps=0
 dataset1.loadData(0)
 dataset2.loadData(0)
-# Get wkt in file
-dataset1.get_wkt()
-dataset2.get_wkt()
+
 
 # Get wkt unions in file - not really necessary anymore
 # dataset.get_wkt_unions()
@@ -33,14 +25,31 @@ dataset2.get_wkt()
 T1 = treeGenerator(dataset1.all_wkt,"T1")
 T2 = treeGenerator(dataset2.all_wkt,"T2")
 
+# Create new timestamped folder for pngs, pkls and graphml
+def create_timestamped_folder(dataset_name):
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    folder_name = f"{dataset_name}_{timestamp}"
+    folder_path = os.path.join("trees/",folder_name)
+    os.makedirs(folder_path, exist_ok=True)
+    return folder_path
+
+new_folder_path = create_timestamped_folder("dummy")
+
+# Get wkt in file
+dataset1.get_wkt(new_folder_path)
+dataset2.get_wkt(new_folder_path)
+
 # Draw png
-T1.drawGraph()
-T2.drawGraph()
+T1.drawGraph(new_folder_path)
+T2.drawGraph(new_folder_path)
 
 # Save trees as pickles
-with open("T1_endenich_atkis_cut.pkl", "wb") as f:
+T1_pkl_path = os.path.join(new_folder_path, "T1.pkl")
+T2_pkl_path = os.path.join(new_folder_path, "T2.pkl")
+
+with open(T1_pkl_path, "wb") as f:
     pickle.dump(T1, f)
-with open("T2_endenich_osm_cut.pkl", "wb") as f:
+with open(T2_pkl_path, "wb") as f:
     pickle.dump(T2, f)
 
 # Calculate weights
@@ -58,11 +67,10 @@ with open("T2_endenich_osm_cut.pkl", "wb") as f:
 # be nomenclature used for the edge, and coordinates of polygons associated with
 # each vertex which means the graph returned by treeGenerator has to have coordinates
 # Graph of each tree contains edges between vertices and vertices. This edges should be
-# ignored and only vertices taken into account when jaccartIndex is performed
-
-
+# ignored and only vertices taken into account when jaccardIndex is performed
 weighted_graph = jaccardIndex(T1,T2)
-nx.write_graphml(weighted_graph, "jaccard_index_endenich_cut.graphml")
+graphml_path = os.path.join(new_folder_path,"jaccard_index.graphml")
+nx.write_graphml(weighted_graph,graphml_path )
 print(weighted_graph)
 
 

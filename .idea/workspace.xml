@@ -4,16 +4,43 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6a227628-013f-42b3-9b77-70e675bcf354" name="Changes" comment="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches.">
-      <change afterPath="$PROJECT_DIR$/T1.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/T2.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/jaccard_index.graphml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="6a227628-013f-42b3-9b77-70e675bcf354" name="Changes" comment="Changed on how percentage between ILP and CANZAR is checked">
+      <change afterPath="$PROJECT_DIR$/folder_tree.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/pythonProject.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/pythonProject.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/T1.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/T1.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/T1_topography.png" beforeDir="false" afterPath="$PROJECT_DIR$/T1_topography.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/T2.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/T2.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/T2_topography.png" beforeDir="false" afterPath="$PROJECT_DIR$/T2_topography.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auerberg_atkis_wkt_polygons.txt" beforeDir="false" afterPath="$PROJECT_DIR$/auerberg_atkis_wkt_polygons.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auerberg_osm_wkt_polygons.txt" beforeDir="false" afterPath="$PROJECT_DIR$/auerberg_osm_wkt_polygons.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jaccard_index.graphml" beforeDir="false" afterPath="$PROJECT_DIR$/jaccard_index.graphml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/my_methods.py" beforeDir="false" afterPath="$PROJECT_DIR$/my_methods.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/optimization.py" beforeDir="false" afterPath="$PROJECT_DIR$/optimization.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runAllDatasets.py" beforeDir="false" afterPath="$PROJECT_DIR$/runAllDatasets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_atkis/beuel-ost_atkis.cpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_atkis/beuel-ost_atkis.dbf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_atkis/beuel-ost_atkis.prj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_atkis/beuel-ost_atkis.qmd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_atkis/beuel-ost_atkis.shp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_atkis/beuel-ost_atkis.shx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_osm/beuel-ost_osm.cpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_osm/beuel-ost_osm.dbf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_osm/beuel-ost_osm.prj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_osm/beuel-ost_osm.qmd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_osm/beuel-ost_osm.shp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/temp_test_files/beuel-ost_osm/beuel-ost_osm.shx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_atkis/auerberg_atkis.cpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_atkis/auerberg_atkis.dbf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_atkis/auerberg_atkis.qmd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_atkis/auerberg_atkis.shp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_atkis/auerberg_atkis.shx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_osm/auerberg_osm.cpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_osm/auerberg_osm.dbf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_osm/auerberg_osm.qmd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_osm/auerberg_osm.shp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/testing/data/auerberg_osm/auerberg_osm.shx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tree_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/tree_generator.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,6 +92,7 @@
     &quot;Python.dataset.executor&quot;: &quot;Run&quot;,
     &quot;Python.gurobitest.executor&quot;: &quot;Run&quot;,
     &quot;Python.ji.executor&quot;: &quot;Run&quot;,
+    &quot;Python.json_reader.executor&quot;: &quot;Run&quot;,
     &quot;Python.my_methods.executor&quot;: &quot;Run&quot;,
     &quot;Python.optimization.executor&quot;: &quot;Run&quot;,
     &quot;Python.runAllDatasets.executor&quot;: &quot;Run&quot;,
@@ -73,9 +101,14 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;canzar&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/shark/Desktop/My Documents/uni/Munster/Possible_thesis/Bonn/virtual_folder.nosync/pythonProject&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PythonContentEntriesConfigurable&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/temp_test_files" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -324,7 +357,71 @@
       <option name="project" value="LOCAL" />
       <updated>1712224978707</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="minor stuff">
+      <option name="closed" value="true" />
+      <created>1714979913259</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1714979913259</updated>
+    </task>
+    <task id="LOCAL-00031" summary="Fractional solution working, polygons from wkt correctly grouped, no duplicates in Canzar">
+      <option name="closed" value="true" />
+      <created>1715603385929</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1715603385929</updated>
+    </task>
+    <task id="LOCAL-00032" summary="First time Canzar working 100 percent right, looks like">
+      <option name="closed" value="true" />
+      <created>1715942762528</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1715942762528</updated>
+    </task>
+    <task id="LOCAL-00033" summary="Some adjustments for running ILP and Canzar simultaneously">
+      <option name="closed" value="true" />
+      <created>1717946172183</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1717946172183</updated>
+    </task>
+    <task id="LOCAL-00034" summary="some add-ons, json etc">
+      <option name="closed" value="true" />
+      <created>1718461055053</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1718461055053</updated>
+    </task>
+    <task id="LOCAL-00035" summary="updates">
+      <option name="closed" value="true" />
+      <created>1719832394526</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1719832394527</updated>
+    </task>
+    <task id="LOCAL-00036" summary="all good">
+      <option name="closed" value="true" />
+      <created>1720443961360</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1720443961360</updated>
+    </task>
+    <task id="LOCAL-00037" summary="Changed on how percentage between ILP and CANZAR is checked">
+      <option name="closed" value="true" />
+      <created>1722083633614</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1722083633628</updated>
+    </task>
+    <option name="localTasksCounter" value="38" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -340,14 +437,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
-    <MESSAGE value="Adding gitignore file" />
-    <MESSAGE value="Issue sorted, code is now working. Problem was with path for second folder." />
-    <MESSAGE value="Trying to call methods from dataset.py" />
-    <MESSAGE value="Trying to call methods from dataset.py Managed to call function loadData" />
-    <MESSAGE value="Added methods for writing wkt and unionised wkt polygons to text files." />
-    <MESSAGE value="minor changes" />
-    <MESSAGE value="bug fixed, both files were writing original triangles from jar file" />
-    <MESSAGE value="Start of tree generator" />
     <MESSAGE value="Added code" />
     <MESSAGE value="Code working. Graph not yet created, will be added in the next iteration." />
     <MESSAGE value="Code for drawing visualisation of a graph added" />
@@ -365,6 +454,14 @@
     <MESSAGE value="some changes in how optimization is ran" />
     <MESSAGE value="Issue with double matching sorted; second constraint had to have tupples reversed" />
     <MESSAGE value="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches." />
-    <option name="LAST_COMMIT_MESSAGE" value="Removal of not connected polygons (without triangles), code optimized. Outpout is showing m:n matches." />
+    <MESSAGE value="minor stuff" />
+    <MESSAGE value="Fractional solution working, polygons from wkt correctly grouped, no duplicates in Canzar" />
+    <MESSAGE value="First time Canzar working 100 percent right, looks like" />
+    <MESSAGE value="Some adjustments for running ILP and Canzar simultaneously" />
+    <MESSAGE value="some add-ons, json etc" />
+    <MESSAGE value="updates" />
+    <MESSAGE value="all good" />
+    <MESSAGE value="Changed on how percentage between ILP and CANZAR is checked" />
+    <option name="LAST_COMMIT_MESSAGE" value="Changed on how percentage between ILP and CANZAR is checked" />
   </component>
 </project>

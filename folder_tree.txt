@@ -1,69 +1,4 @@
-# Many-to-Many Matching of Building Footprints Using Generalization Hierarchies
-
-## Author
-Nikola Grlj, MSc
-
-## Supervisor
-Prof. Dr. Edzer Pebesma, Institute for Geoinformatics, Munster University
-MSc Annika Bonerath, Institute for Geodesy and Geoinformatics, Bonn University
-
-## Other contributors
-MSc Alexander Naumann, Institute for Geodesy and Geoinformatics, Bonn University
-Prof. Dr. Jan-Henrik Haunert, Institute for Geodesy and Geoinformatics, Bonn University
-MSc Peter Rottman, Institute for Geodesy and Geoinformatics, Bonn University
-Prof. Dr. Stefan Canzar, Heidelberg University
-
-## Institution
-Munster University  
-Bonn University
-
-## Abstract
-Thesis is outlining newly developed algorithm for m:n polygon matching using generalization hierarchies and linear programming.
-From two datasets representing same spatial extent, a generalization is performed on each and as such used to build a rooted tree. Two trees are joined into
-a bipartite graph for which weighted edges are created from Jaccard Index of the underlying nodes polygons.
-Bipartite graph is solved in two ways; using Integer Linear Programming and using approximation algorithm. Results show possible m:n matches as well as comparative but faster results using approximation algorithm.
-
-## Table of Contents
-- [Introduction](#introduction)
-- [Methodology](#methodology)
-- [Results](#results)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Introduction
-The topic builds on top of previous research done by Geoinformation group from Bonn University (members mentioned above). It is common occurence that for the same spatial extent more than one map is available. Maps represent datasets, a collection of polygons with respective vertex coordinates representing building or land division. Often there will exist a mismatch between two maps. This thesis is trying to implement an algorithm which would detect corresponding polygons between the two datasets.
-## Methodology
-Detection of corresponding polygons or matching of polygons can come in several different shapes. If there is one polygon from one dataset matched to one polygon from another dataset, we call this a 1:1 match. If more polygons are included, we can have 1:n, m:1 or m:n match. Previous research by done in the group focused on m:1 and 1:n matching, and m:n matching where the latter was done with all possible legal polygon groups in mind. This thesis instead tries to build a generalization hierarchy from each dataset into a rooted tree, and then find best matching groups which provide highest value of the objective function. Objective function represents sum of weights of chosen matches. To maximize this, method of Integer Linear Programming is employed. This method becomes increasingly expensive for large datasets, hence an alternative solution is proposed as a comparison for providing approximate result of matching process. In the end, these two results are compared to unrestricted grouping method.
-## Results
-Results are satisfactory. The algorithm has ability to detect m:n matches. Using approximation method significantly reduce the computation time with resulting objective function almost always equal to the results obtained with ILP. Matching using generalization hierarchies does provides less optimal results from the unrestrained matching. It is important to mention that the weight used here is Intersection over Union (IoU) which can be replaced by other appropriate weighting method.
-## Installation
-It is possible to set up the code to run either locally or in Google Colab environment. Running times will depend as Google Colab has a runtime limit and will break for larger datasets. 
-Some important caveats are the following: Gurobi librari is non-standard and has to be downloaded from Gurobi directly with licence. Depending on what kind of dataset you have there are different steps which have to be followed. Workflow is described for the full process when starting from ground up.  
-### Step 1 - Preprocessing  
-User should have two datasets of polygons representing same spatial extent. The datasets must be a shape file. Each of the two datasets has to be generalized with a Delaunay triangulation process and this is done by using generalization.jar file (Java must be installed on your computer). Folder "testing/data" should contain another folder with the name of your dataset. That folder has to contain shape files. One folder per dataset. When folders are redy with shape files inside, a python script called "runAllDatasets.py" should be opened, lines 30 and 32 adjusted in order to be able to locate shape files, and then the script should be ran. If everything goes well, folder "tri" will contain new folders named same like your folders which are holding shape files. Inside will be files used to create generalization hierarchy of your dataset.  
-### Step 2 - Building trees
-Now you should have two folders (one for each dataset) in the "tri" folder. To build the trees from these two folders, navigate to script "my_methods". This script will create two trees from two datasets (set correct path in lines 10 and 11) and combine these two trees into a bipartite graph with weighted edges between vertices of tree 1 and tree 2. The two trees and bipartite graph are saved for further use, as well as png files representing the trees.  
-### Step 3 - Optimization
-This is the final step. In the beginning of the code, set up paths for previously saved trees and bipartite graph. In the end of the script, it is possible to adjust commented blocks of the code in order to run one pair of datasets or a batch set. Batch running is appropriate for multiple dataset pairs and lambda values (constant removed from Jaccard Index weights). When optimization has been ran, there will be verbatim output in the console, as well as some files which will be saved. Files are saved in "optimizations" folder under respective names and with the appropriate timestamp. Enter folder to find shape files used and see the matching data for both Canzar and ILP algorithm. "report.txt" file contains most important output for the optimization.
-### Appendix
-Folder "temp_test_file" functions as a holder for whichever shape files you want to be using.  
-Folder hierarchy below shows the most important folders. In reality, all the intermediate files which have been created during the development process are left.
-
-
-```bash
-# Clone the repository
-git clone https://github.com/greymouse1/hierarchy_generator.git
-
-# Navigate into the repository
-cd hierarchy_generator
-
-# Install dependencies
-pip install -r requirements.txt
-```
-```
-hierarchy_generator/
+.
 ├── README.md
 ├── T1.pkl
 ├── T1_auerberg.pkl
@@ -461,4 +396,5 @@ hierarchy_generator/
 │   └── shp_files_ILP
 ├── zentrum_atkis_wkt_polygons.txt
 └── zentrum_osm_wkt_polygons.txt
-```
+
+193 directories, 205 files

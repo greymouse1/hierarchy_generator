@@ -221,7 +221,7 @@ class treeGenerator:
         for i in range(len(self.tree_leaves)):
             self.leaf_list.append(nx.shortest_path(self.G, source=self.tree_root[0], target=self.tree_leaves[i]))
 
-    def drawGraph(self):
+    def drawGraph(self,path):
         # Draw the graph, remove geometry because pydot gets error if geometry is used
         # It is not important here, this graph is just for drawing
         # original graph keeps geometries
@@ -236,7 +236,8 @@ class treeGenerator:
 
         # below works well, plots tree into png
         p = nx.drawing.nx_pydot.to_pydot(G_without_area)
-        p.write_png(f'{self.tree_name}_topography.png')
+        #p.write_png(f'{self.tree_name}_topography.png')
+        p.write_png(f'{path}/{self.tree_name}_topography.png')
         print(f"Graph for {self.tree_name} saved in *,png file")
 
     # This function is called later on when matching process was done. Input into this is list of nodes
