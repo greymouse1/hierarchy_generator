@@ -4,18 +4,18 @@
 Nikola Grlj, MSc
 
 ## Supervisor
-Prof. Dr. Edzer Pebesma, Institute for Geoinformatics, Munster University
-MSc Annika Bonerath, Institute for Geodesy and Geoinformatics, Bonn University
+Prof. Dr. Edzer Pebesma, Institute for Geoinformatics, Munster University<br>
+MSc Annika Bonerath, Institute for Geodesy and Geoinformatics, Bonn University<br>
 
 ## Other contributors
-MSc Alexander Naumann, Institute for Geodesy and Geoinformatics, Bonn University
-Prof. Dr. Jan-Henrik Haunert, Institute for Geodesy and Geoinformatics, Bonn University
-MSc Peter Rottman, Institute for Geodesy and Geoinformatics, Bonn University
-Prof. Dr. Stefan Canzar, Heidelberg University
+MSc Alexander Naumann, Institute for Geodesy and Geoinformatics, Bonn University<br>
+Prof. Dr. Jan-Henrik Haunert, Institute for Geodesy and Geoinformatics, Bonn University<br>
+MSc Peter Rottman, Institute for Geodesy and Geoinformatics, Bonn University<br>
+Prof. Dr. Stefan Canzar, Heidelberg University<br>
 
 ## Institution
-Munster University  
-Bonn University
+Munster University<br>
+Bonn University<br>
 
 ## Abstract
 Thesis is outlining newly developed algorithm for m:n polygon matching using generalization hierarchies and linear programming.
